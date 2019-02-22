@@ -1,0 +1,25 @@
+{
+  "perl"          : "6.*",
+  "name"          : "Intl::Fluent",
+  "version"       : "0.3",
+  "api"           : 1,
+  "description"   : "A localization framework implementing Mozilla’s project Fluent",
+  "authors"       : ["Matthew ‘Matéu’ Stephen STUCKWISCH <mateu@softastur.com>"],
+  "auth"          : "github:alabamenhu",
+  "license"       : "Artistic-2.0",
+  "depends"       : [ ],
+  "build-depends" : [ ],
+  "test-depends"  : [ ],
+  "resources"     : [ ],
+  "provides"      : {
+    "Intl::Fluent"                 : "lib/Intl/Fluent.pm6",
+    "Intl::Fluent::Grammar"        : "lib/Intl/Fluent/Grammar.pm6",
+    "Intl::Fluent::Actions"        : "lib/Intl/Fluent/Actions.pm6",
+    "Intl::Fluent::Classes"        : "lib/Intl/Fluent/Classes.pm6",
+  },
+  "tags"          : [
+    "Language", "Tag", "Localization", "Locale", "International",
+    "Internationalization", "RF"
+  ],
+  "source-url"    : "git://github.com/alabamenhu/bcp47.git"
+}
