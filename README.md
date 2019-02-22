@@ -1,6 +1,12 @@
+# WARNING
+
+This module is in its very early stages and not yet very useful.  It does
+not fail gracefully when variables aren't passed, and the two core functions,
+NUMBER() and DATE() have not been implementing, pending an implementation of the
+relevant parts CLDR/ICU into a separate Intl module.
 # Example
 
-A Perl 6 modulee that implements Mozilla's Project Fluent.
+A Perl 6 module that implements Mozilla's Project Fluent.
 
 This is an implementation based on the design documents, but it is not actually
 a port.  The idea is to provide both an interface and code that is
