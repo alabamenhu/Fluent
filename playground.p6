@@ -1,4 +1,3 @@
-use lib 'lib';
 use Fluent;
 use Intl::BCP47;
 

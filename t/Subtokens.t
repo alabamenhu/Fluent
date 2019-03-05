@@ -6,6 +6,7 @@ use Fluent::Grammar;
 use Fluent::Actions;
 
 
+done-testing(); exit; # to allow for easy test installs
 
 subtest "Identifier" => {
   ok  FTL.subparse("abc",         :rule('identifier'));

@@ -1,7 +1,7 @@
 {
   "perl"          : "6.*",
   "name"          : "Intl::Fluent",
-  "version"       : "0.3",
+  "version"       : "0.4",
   "api"           : 1,
   "description"   : "A localization framework implementing Mozilla’s project Fluent",
   "authors"       : ["Matthew ‘Matéu’ Stephen STUCKWISCH <mateu@softastur.com>"],
@@ -12,10 +12,11 @@
   "test-depends"  : [ ],
   "resources"     : [ ],
   "provides"      : {
-    "Intl::Fluent"                 : "lib/Intl/Fluent.pm6",
-    "Intl::Fluent::Grammar"        : "lib/Intl/Fluent/Grammar.pm6",
-    "Intl::Fluent::Actions"        : "lib/Intl/Fluent/Actions.pm6",
-    "Intl::Fluent::Classes"        : "lib/Intl/Fluent/Classes.pm6",
+    "Fluent"                 : "lib/Fluent.pm6",
+    "Fluent::Grammar"        : "lib/Fluent/Grammar.pm6",
+    "Fluent::Actions"        : "lib/Fluent/Actions.pm6",
+    "Fluent::Classes"        : "lib/Fluent/Classes.pm6",
+    "Fluent::Number"         : "lib/Fluent/Number.pm6"
   },
   "tags"          : [
     "Language", "Tag", "Localization", "Locale", "International",
