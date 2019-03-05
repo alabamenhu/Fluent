@@ -56,7 +56,7 @@ method comment-line ($/) {
   make Comment.new(:$type, :$text);
 }
 method junk ($/) { make Junk.new( :text($/.Str )) }
-method identifier ($/) { make $/.Str }
+method identifier ($/) { make Identifier.new(:text($/.Str)) }
 
 
 method quoted-char:sym<text>           ($/) { make $0.Str }
@@ -78,7 +78,6 @@ method term ($/) {
   my $identifier = $<identifier>.Str;
   my @patterns = $<pattern>.made;
   my @attributes = $<attribute>.map(*.made);
-  say "Term: ", @patterns;
   make Term.new(:$identifier, :@patterns, :@attributes);
  }
 
@@ -104,15 +103,14 @@ method pattern-element:sym<block-text> ($/) {
 }
 
 method inline-text ($/) {
-  say 'inline-text'
+  #say 'inline-text'
+  ;
 }
 method block-text ($/) {
-  say "Given the following block text: ";
-
+  #say "Given the following block text: ";
+  ;
 }
 method pattern-element:sym<inline-placeable> ($/) {
-  say $<select-expression>.made.gist;
-  say $<inline-expression>.made.gist;
    make ($<select-expression> || $<inline-expression>).made;
  }
 method pattern-element:sym<block-placeable>  ($/) {
@@ -132,7 +130,8 @@ method number-literal ($/){
   my $sign = $0 ?? $0.Str !! "+";
   my $integer = $1.Str;
   my $decimal = $2 ?? $2.Str !! "";
-  make NumberLiteral.new(:$sign, :$integer, :$decimal);
+  my $original = $/;
+  make NumberLiteral.new(:$sign, :$integer, :$decimal, :$original);
 }
 
 # THERE ARE FOUR REFERENCE EXPRESSION TYPES
@@ -179,38 +178,25 @@ method named-argument ($/) {
   make NamedArgument.new(:$identifier, :$value)
 }
 method select-expression ($/){
-  say 'SELECT EXPRESSION';
   my $selector = $<inline-expression>.made;
-  say '    INLINE: ', $selector;
   my %variants = $<variant-list>.made;
   my @others = %variants<others><>;
   my $default = %variants<default>;
-  say '  VARIANTS: ', @others[0].gist;
-  say '            ', @others[$_].gist for 1..^@others.elems;
-  say '           *', $default.gist;
   make Select.new(:$selector, :$default, :@others);
 }
 method variant-list ($/){
-  say "VARIANT LIST";
   my @variants = $<variant>.map(*.made);
   my $default = $<default-variant>.made;
-  say "  VARIANT COUNT: ", @variants.elems;
   make {others => @variants, default => $default};
 }
 method variant ($/) {
-  say "NORMAL VARIANT";
   my $identifier = $<variant-key>.made;
   my @patterns = $<pattern>.made;
-  say "     ID: ", $identifier.gist;
-  say "  VALUE: ", @patterns.map(*.gist).join('');
   make Variant.new(:!default, :$identifier, :@patterns);
 }
 method default-variant ($/) {
-  say "DEFAULT VARIANT";
   my $identifier = $<variant-key>.made;
-  say "     ID: ", $identifier.gist;
   my @patterns = $<pattern>.made;
-  say "  VALUE: ", @patterns.map(*.gist).join('');
   make Variant.new(:default, :$identifier, :@patterns);
 }
 method variant-key ($/) {
@@ -218,12 +204,7 @@ method variant-key ($/) {
   if $0<number-literal> {
     $identifier = $0<number-literal>.made;
   } else {
-    $identifier = $0<identifier>.Str;
+    $identifier = $0<identifier>.made;
   }
   make $identifier;
-  #my $identifier = ?$<number-literal>
-  #                    ?? $<number-literal>.made
-  #                    !! $<identifier>.Str;
-  #say 'variant-key id: ', $identifier.gist;
-  #make $identifier;
 }

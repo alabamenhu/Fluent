@@ -1,3 +1,6 @@
+use Fluent::Number;
+use Intl::BCP47;
+
 sub StrHash ($s, %h --> Str)  {
   $s but (
     %h,
@@ -196,15 +199,27 @@ class Comment is export {
   }
 }
 
+
 role Literal {
   method format { ... } # there is a guarantee that no recursion is possible
 }
 
+class Identifier does Literal does Pattern {
+  has Str $.text;
+  multi method gist (::?CLASS:D:) { '$id:' ~ $.text ~ ':' }
+  multi method gist (::?CLASS:U:) { '$id;' }
+  method Str { $.text }
+  method format { $.text }
+}
+
+
 class StringLiteral does Literal does Pattern {
   has Str $.text;
-  method gist (::?CLASS:D:) { '“' ~ $.text ~ '”' }
+  multi method gist (::?CLASS:D:) { '“' ~ $.text ~ '”' }
+  multi method gist (::?CLASS:U:) { '“StrLit”' }
   method format { return $.text }
 }
+
 
 class NumberLiteral does Literal does Pattern {
   has Cool $.plusminus = 1;
@@ -212,14 +227,18 @@ class NumberLiteral does Literal does Pattern {
   has Str $.decimal;
   has Str $.text; # what it was derived from;
   has Num $.value;
+  # Probably 90% of this is garbage and needs to be cleaned up.
+  # The number literal is effectively matched as a string
+  #
   method new (:$sign, :$integer, :$decimal) {
     my $plusminus = $sign eq "-" ?? -1 !! 1;
     my $value = Num.new(($integer // '0') ~ ('.' ~ $decimal if $decimal ne '')) * $plusminus;
     my $text = $sign ~ $integer ~ ("." ~ $decimal if ?$decimal);
     self.bless(:$plusminus, :$integer, :$decimal, :$text, :$value);
   }
-  method format { return $.text }
-  method gist (::?CLASS:D:) { return ($.plusminus == 1 ?? '+' !! '-') ~ $.integer ~ '.' ~ $.decimal }
+  method format { return $.value.Str }
+  multi method gist (::?CLASS:D:) { return ($.plusminus == 1 ?? '+' !! '-') ~ $.integer ~ '.' ~ $.decimal }
+  multi method gist (::?CLASS:U:) { 'NumLit' }
 }
 
 
@@ -266,9 +285,17 @@ class Select is Placeable does Pattern  {
   }
   method format { ## todo check string vs number
     my $selector = $.selector.format;
+    # [Attempt 1] Check the exact string from the selector
     for @.others -> $variant {
       return $variant.format if $variant.identifier.format eq $selector;
     }
+    # [Attempt 2] Check for the number category if it's possible.
+    if $selector = cldr-number-type($.selector.format, $*LANGUAGE) {
+      for @.others -> $variant {
+        return $variant.format if $variant.identifier eq $selector;
+      }
+    }
+    # And finally, if everything fails, the default
     return $.default.format;
   }
 }
@@ -281,11 +308,10 @@ class Localization is export {
 
 
   method gist {
-    say "ᴸ$.id";
+    "ᴸ$.id";
   }
 
   method new(@entries) {
-    say "Making new localization";
     my %messages = ();
     my %terms = ();
     for @entries -> $entry {
@@ -300,9 +326,10 @@ class Localization is export {
     return self.bless(:%messages, :%terms, :$id);
   }
 
-  method format(Str $messageID, :$attribute = Nil, *%variables --> Str) {
-    say "Formatting message '$messageID' given variables ", %variables;
+  method format(Str $messageID, LanguageTag $language, :$attribute = Nil, *%variables --> Str) {
+    say "Formatting message '$messageID' given locale ", $language, ", variables ", %variables;
     my %*VARIABLES = %variables;
+    my $*LANGUAGE = $language;
     return %.messages{$messageID}.format(:$attribute);
   }
 }
