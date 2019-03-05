@@ -1,5 +1,3 @@
-use lib '../lib';
-use lib 'lib';
 use Test;
 use Fluent;
 use Fluent::Grammar;

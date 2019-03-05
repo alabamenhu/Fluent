@@ -7,7 +7,7 @@
   "authors"       : ["Matthew ‘Matéu’ Stephen STUCKWISCH <mateu@softastur.com>"],
   "auth"          : "github:alabamenhu",
   "license"       : "Artistic-2.0",
-  "depends"       : [ ],
+  "depends"       : [ "Intl::BCP47" ],
   "build-depends" : [ ],
   "test-depends"  : [ ],
   "resources"     : [ ],
