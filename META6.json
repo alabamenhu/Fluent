@@ -10,7 +10,7 @@
   "depends"       : [ "Intl::BCP47" ],
   "build-depends" : [ ],
   "test-depends"  : [ ],
-  "resources"     : [ ],
+  "resources"     : [ "foo1.txt", "foo2.txt", "bar/foo3.txt" ],
   "provides"      : {
     "Fluent"                 : "lib/Fluent.pm6",
     "Fluent::Grammar"        : "lib/Fluent/Grammar.pm6",

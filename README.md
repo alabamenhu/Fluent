@@ -21,21 +21,21 @@ This owes to its origins as a framework for web translation where the attributes
 could autopopulate various child elements and attributes.  In Perl 6, you can
 access those attributes as if the result were a hash such that
 
-    my $translation = $localization.format('greeting');
-    say $translation; # --> "Hello!"
-    say $translation<foo>; # --> "some related text"
-    say $translation<bar>; # --> "some other related text"
+    my $translation = localized: 'greeting';
+    say $translation; # ↪︎ "Hello!"
+    say $translation<foo>; # ↪︎ "some related text"
+    say $translation<bar>; # ↪︎ "some other related text"
 
 Variables are passed using named arguments:
 
-    my $translationA = $localization.format('greeting2', :who('Jane'));
-    say $translationA; # --> "Hello, Jane!"
+    my $translationA = localized: 'greeting2', :who('Jane');
+    say $translationA; # ↪︎ "Hello, Jane!"
     my $translationB = $localization.format('greeting2', :who('Jack'));
-    say $translationB; # --> "Hello, Jack!"
+    say $translationB; # ↪︎ "Hello, Jack!"
 
 # Formatting and organization
 
-The file format is described on the [Project Fluent page](https://www.projectfluent.org).  
+The file format is described on the [Project Fluent page](https://projectfluent.org).   
 To use localization files, just provide the root path of the files which can
 be in your resources folder or locally stored on a disk.  If you're writing a
 module, structure it like this:
@@ -145,8 +145,8 @@ above.
 
 Note that this means it is a *bad idea* to only include regional language tags
 without a base one.  In the module example, there is a tag for `es-ES` and
-`es-MX`.  For a user requesting `es-GT`, Fluent will not fine any Guatamalan
+`es-MX`.  For a user requesting `es-GT`, Fluent will not fine any Guatemalan
 Spanish files, and so then will try `es`.  But it *also* won't find that!  At
-that point, it's only two options are to either choose randomly between
+that point, its only two options are to either choose randomly between
 Peninsular or Mexican Spanish, or go to the next best choice (or the default
 or, worst case, the fallback).

@@ -3,7 +3,7 @@ use Intl::BCP47;
 
 my $x = LanguageTag.new('en');
 
-my $l = localized('hello = Hello!
+my $l = messages('hello = Hello!
   .morning = Good morning!
   .night = Good evening!
 
@@ -16,6 +16,10 @@ messages = { $number ->
  [42] Wow! You have the-answer-to-the-ultimate-question-of-life-the-university-and-everything messages!
 }
 ');
+
+my %resources := files;
+say "--", %resources.WHAT.gist, "--";
+say %resources<bar><foo3.txt>;
 
 #say "---------------";
 #say "Messages: \n  ", $l.messages.values.map(*.gist).join("\n  ");

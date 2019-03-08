@@ -303,7 +303,7 @@ class Select is Placeable does Pattern  {
 class Localization is export {
   has Term %.terms;
   has Message %.messages;
-  has Comment @comments;
+  has Comment @.comments;
   has $.id;
 
 
@@ -314,6 +314,7 @@ class Localization is export {
   method new(@entries) {
     my %messages = ();
     my %terms = ();
+    my @comments = ();
     for @entries -> $entry {
       given $entry {
         when Message { %messages{$entry.identifier} = $entry }
@@ -323,10 +324,20 @@ class Localization is export {
     }
     state $id = 0;
     $id++;
-    return self.bless(:%messages, :%terms, :$id);
+    return self.bless(:%messages, :%terms, :$id, :@comments);
   }
 
-  method format(Str $messageID, LanguageTag $language, :$attribute = Nil, *%variables --> Str) {
+  method add(@entries) {
+    for @entries -> $entry {
+      given $entry {
+        when Message { %.messages{$entry.identifier} = $entry }
+        when Term { %.terms{$entry.identifier} = $entry }
+        when Comment { @.comments.push: $entry }
+      }
+    }
+  }
+
+  method format(Str $messageID, :$attribute = Nil, *%variables --> Str) {
     say "Formatting message '$messageID' given locale ", $language, ", variables ", %variables;
     my %*VARIABLES = %variables;
     my $*LANGUAGE = $language;
