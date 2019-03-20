@@ -67,8 +67,8 @@ project where we've named files 'ui_en.ftl', 'ui_es-ES.ftl', etc, we might say:
 
     Fluent.add-base-path: 'data/l10n/ui_';
 
-In later versions of this module, you will also have an additional option to
-group the terms.  This may be useful if your script is handling several different
+You also have an additional option to group the terms into various *domains*.
+This may be useful if your script is handling several different
 sites/services/etc at once, and each one may have different texts for the same
 message id.  So, imagining I had an HTTP server and a website called Fruitopia
 all about fruits, and another called Vegitania all about vegetables, with vastly
@@ -109,7 +109,13 @@ the domain.  If the arity is greater than 2 then all other parameters will be
 passed a blank string, although the third one *may* in the future also receive
 a hash of variables being passed.
 
-= Language Usage Notes
+# Other options
+
+If you want to exert more manual control over the loading of data, you can
+use the `load-localization` sub.  This method takes a string in FTL format,
+a language code, and an optional domain as arguments.
+
+# Language Usage Notes
 
 If the first thing you do with Fluent is pass a base file, Fluent won't do
 much of anything with it.  Fluent also needs to know which languages you intend
@@ -145,7 +151,7 @@ above.
 
 Note that this means it is a *bad idea* to only include regional language tags
 without a base one.  In the module example, there is a tag for `es-ES` and
-`es-MX`.  For a user requesting `es-GT`, Fluent will not fine any Guatemalan
+`es-MX`.  For a user requesting `es-GT`, Fluent will not find any Guatemalan
 Spanish files, and so then will try `es`.  But it *also* won't find that!  At
 that point, its only two options are to either choose randomly between
 Peninsular or Mexican Spanish, or go to the next best choice (or the default

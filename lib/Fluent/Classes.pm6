@@ -29,7 +29,7 @@ class Message is export {
     my %secondary = gather {
       take ($_.identifier => $_.format(:$attribute)) for @.attributes;
     }
-    return $primary;
+    #return $primary;
     return StrHash($primary, %secondary);
   }
 }
@@ -152,7 +152,8 @@ class MessageReference is Placeable does Pattern does Argument {
     $*MESSAGES{:$.attribute}.format
   }
   method format {
-    $*MESSAGES{:$.attribute}.format
+    $*MANAGER.find-message($.identifier).format(:$.attribute)
+    # $*MESSAGES{:$.attribute}.format
   }
 }
 
@@ -165,10 +166,10 @@ class TermReference is Placeable does Pattern does Argument {
   }
 
   method argument-value {
-    $*MESAGES{:$.attribute, :@.arguments}
+    $*MESAGES{:$.attribute, :@.arguments} # todo redo
   }
   method format {
-    $*MESSAGES{:attribute, :@.arguments}
+    $*MANAGER.find-term($.identifier).format(:$.attribute)
   }
 }
 
@@ -300,50 +301,7 @@ class Select is Placeable does Pattern  {
   }
 }
 
-class Localization is export {
-  has Term %.terms;
-  has Message %.messages;
-  has Comment @.comments;
-  has $.id;
 
-
-  method gist {
-    "ᴸ$.id";
-  }
-
-  method new(@entries) {
-    my %messages = ();
-    my %terms = ();
-    my @comments = ();
-    for @entries -> $entry {
-      given $entry {
-        when Message { %messages{$entry.identifier} = $entry }
-        when Term { %terms{$entry.identifier} = $entry }
-        when Comment { @comments.push: $entry }
-      }
-    }
-    state $id = 0;
-    $id++;
-    return self.bless(:%messages, :%terms, :$id, :@comments);
-  }
-
-  method add(@entries) {
-    for @entries -> $entry {
-      given $entry {
-        when Message { %.messages{$entry.identifier} = $entry }
-        when Term { %.terms{$entry.identifier} = $entry }
-        when Comment { @.comments.push: $entry }
-      }
-    }
-  }
-
-  method format(Str $messageID, :$attribute = Nil, *%variables --> Str) {
-    say "Formatting message '$messageID' given locale ", $language, ", variables ", %variables;
-    my %*VARIABLES = %variables;
-    my $*LANGUAGE = $language;
-    return %.messages{$messageID}.format(:$attribute);
-  }
-}
 
 
 class Junk is export {

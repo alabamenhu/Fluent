@@ -46,8 +46,7 @@ method TOP ($/) {
     $index++;
   }
 
-  my $localization = Localization.new(@entries);
-  make $localization;
+  make @entries;
 }
 
 method comment-line ($/) {
