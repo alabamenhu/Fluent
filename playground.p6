@@ -1,22 +1,15 @@
 use lib 'lib';
-#use Fluent;
-use Intl::BCP47;
 use Fluent;
+use Intl::BCP47;
 
-load-localization("hello = Hello!
-  .morning = Good morning!
-  .evening = Good night!
+#add-localization-basepath("localization");
+add-localization-basepath("");
+add-localization-language("es");
+add-localization-language("en");
 
-goodbye = Goodbye!", "en");
-
-load-localization("hello = ¡Hola!
-  .morning = ¡Buenos días!
-  .evening = ¡Buenas noches!
-
-goodbye = ¡Adiós!", "es");
-
-say localized("hello", :language("en"))<morning>;
-say localized("hello", :language("es"))<morning>;
+say localized("hello")<evening>;
+say localized("goodbye", :language("en"));
+say localized("hello", :language("es"))<evening>;
 say localized("howareyou", :language("es"));
 #say FTL.parse($text ~ "\n");
 #say FTL.parse($text ~ "\n", :actions(FTLActions)).made;

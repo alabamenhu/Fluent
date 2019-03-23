@@ -7,14 +7,19 @@ use Fluent::Actions;
 done-testing(); exit; # to allow for easy test installs
 
 subtest "Identifier" => {
+  # Should accept letters a..z, A..Z, digits 0..9, underscores and hyphens
   ok  FTL.subparse("abc",         :rule('identifier'));
   ok  FTL.subparse("abc_123-xyz", :rule('identifier'));
+  # Identifiers cannot begin with a minus or a number, even though they can
+  # contain them elsewhere
   nok FTL.subparse("-abc",        :rule('identifier'));
   nok FTL.subparse("123abc",      :rule('identifier'));
+  # Special characters aren't valid characters for identifiers.
   is  FTL.subparse("abç",         :rule('identifier')).Str, "ab";
 }
 
 subtest "Variant Key" => {
+  # Any amount of spacing (if any) is considered acceptable
   ok FTL.subparse('[abc]', :rule('variant-key'));
   ok FTL.subparse('[    abc  ]', :rule('variant-key'));
   ok FTL.subparse('[

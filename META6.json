@@ -1,7 +1,7 @@
 {
   "perl"          : "6.*",
   "name"          : "Intl::Fluent",
-  "version"       : "0.5",
+  "version"       : "0.6",
   "api"           : 1,
   "description"   : "A localization framework implementing Mozilla’s project Fluent",
   "authors"       : ["Matthew ‘Matéu’ Stephen STUCKWISCH <mateu@softastur.com>"],
@@ -10,7 +10,7 @@
   "depends"       : [ "Intl::BCP47" ],
   "build-depends" : [ ],
   "test-depends"  : [ ],
-  "resources"     : [ "foo1.txt", "foo2.txt", "bar/foo3.txt" ],
+  "resources"     : [ ],
   "provides"      : {
     "Fluent"                 : "lib/Fluent.pm6",
     "Fluent::Grammar"        : "lib/Fluent/Grammar.pm6",

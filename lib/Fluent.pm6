@@ -8,6 +8,11 @@ use Intl::UserLanguage;
 
 
 class Domain {
+  ####################
+  # INTERNAL CLASSES #
+  ####################
+  # Container holds onto the messages and terms for a given language
+  # BasePath
   class Container {
     has Message %.messages       = ();
     has Term    %.terms          = ();
@@ -17,10 +22,10 @@ class Domain {
     multi method add (Message $message) { %.messages{$message.id} = $message }
     multi method add (Term    $term   ) { %.Terms\  {   $term.id} = $term    }
 
-    method message ($id) { %.messages{$id} // Nil }
-    method term    ($id) {    %.terms{$id} // Nil }
-
-    method load(Str $text) {
+    # Immediately loads the FTL-formatted file into the container
+    proto method load($){*}
+    multi method load($file) { say $file.WHAT; samewith $file.slurp }
+    multi method load(Str $text) is default {
       use Fluent::Grammar;
       use Fluent::Actions;
       my @entries = FTL.parse($text ~ "\n", :actions(FTLActions)).made;
@@ -32,14 +37,59 @@ class Domain {
         }
       }
     }
+    method add-path ($path where IO::Path|Distribution::Resource, :$lazy = True) {
+      $lazy
+        ?? push @.unloaded-files, $path
+        !! self.load($path.slurp)
+    }
+    # Both of these methods (message and term) also handle the lazy loading.
+    # If the message/term isn't found, then each as-yet unloaded file is
+    # sequentially loaded and processed, and the process is stopped as soon
+    # as a message/term is found, leave the remaining ones undone.
+    method message ($id) {
+      return %.messages{$id} if %.messages{$id}:exists;
+      while my $file = @.unloaded-files.shift {
+        self.load($file.slurp);
+        return %.messages{$id} if %.messages{$id}:exists;
+      }
+      Nil
+    }
+    method term($id) {
+      return %.terms{$id} if %.terms{$id}:exists;
+      while my $file = @.unloaded-files.shift {
+        self.load($file.slurp);
+        return %.terms{$id} if %.terms{$id}:exists;
+      }
+      Nil
+    }
   }
+  class BasePath {
+    has Str  $.path     = '';
+    has Bool $.resource = False;
+    has Bool $.lazy     = True;
+    method file (Str() $filename) {
+      $.resource
+        ??  %?RESOURCES{$.path ~ $filename}
+        !! IO::Path.new($.path ~ $filename)
+    }
+  }
+
   has Str     $.id; # probably unnecessary
   has Container %languages;
+  has BasePath  @base-paths;
 
   method message($id, @languages) {
-    for @languages -> $language {
-      next unless %languages{$language}:exists;
-      next unless my $message = %languages{$language}.message($id);
+    my @candidates = lookup-language-tags(%languages.keys, @languages);
+    for @candidates -> $candidate {
+      next unless my $message = %languages{$candidate}.message($id);
+      return $message;
+    }
+    Nil
+  }
+  method term($id, @languages) {
+    my @candidates = lookup-language-tags(%languages.keys, @languages);
+    for @candidates -> $candidate {
+      next unless my $message = %languages{$candidate}.term($id);
       return $message;
     }
     Nil
@@ -48,6 +98,22 @@ class Domain {
   method load (Str $text, $language) {
     %languages{$language} = Container.new unless %languages{$language}:exists;
     %languages{$language}.load($text);
+  }
+
+  method add-basepath (Str() $path, Bool :$resource = False, :$lazy = True) {
+    # TODO check if paths are already loaded and warn
+    # Pass the new basepath to all existing languages and store it for
+    # languages that added later;
+    my $basepath = BasePath.new(:$path, :$resource);
+    %languages{$_}.add-path($basepath.file($_ ~ '.ftl')) for %languages.keys;
+    push @base-paths, $basepath;
+  }
+  method add-language (Str() $language-tag) {
+    # TODO check if langauge is already made and warn
+    # Create a container, and populate it with all existing base paths.
+    my $language = Container.new;
+    $language.add-path: $_.file($language-tag ~ '.ftl') for @base-paths;
+    %languages{$language-tag} = $language;
   }
 
 }
@@ -59,7 +125,7 @@ class LocalizationManager is export {
   has Domain $!default-domain = Domain.new;
 
   has &!fallback-message = ( '[' ~ * ~ '|' ~ *.uc ~ ']' ); # [DOMAIN:message]
-  has @default-languages = user-languages(); # Intl::UserLanguage
+  has @.default-languages = user-languages(); # Intl::UserLanguage
 
   method localized(
       Str $message-id,
@@ -72,11 +138,8 @@ class LocalizationManager is export {
 
       # If $language is defined it is folded into @languages as the top pick.
       # Defaults are used only if no languages are provided.
-      @languages.prepend: $language if $language;
-      @languages = @default-languages if @languages == 0;
-      # Get the order that we should attempt finding localizations in.
-      # TODO: include reduced language tags for long matches
-      #my @language-test-order = filter-language-tags(@languages, @support-languages);
+      @languages.prepend: LanguageTag.new($language) if $language;
+      @languages = @!default-languages if @languages == 0;
 
       # The %variables is for when someone has stored values or if they need to
       # use one of the reserved terms 'language', 'languages', 'attribute' or
@@ -95,26 +158,33 @@ class LocalizationManager is export {
       }
   }
 
-  method find-message($id, $domain-id = Nil, :@languages = Nil) {
-    my $domain;
-    $domain = $domain-id ?? %!domains{$domain-id} !! $!default-domain;
-    $domain.message: $id, @languages;
+  method find-message($id, $domain-id = Nil, :@languages = @!default-languages) {
+    self.domain($domain-id).message: $id, @languages;
   }
-  method find-term($id, $domain-id = Nil, :@languages = Nil) {
-    my $domain;
-    $domain = $domain-id ?? %!domains{$domain-id} !! $!default-domain;
-    $domain.term: $id, @languages;
+  method find-term($id, $domain-id = Nil, :@languages = @!default-languages) {
+    self.domain($domain-id).term: $id, @languages;
   }
 
-  method load(Str $text, $language, $domain-id = Nil) {
-    my $domain;
-    if $domain-id ~~ Nil { # for some weird reason, ?$domain-id doesn't work
-      $domain = $!default-domain;
-    } else {
-      %!domains{$domain-id} = Domain.new unless %!domains{$domain-id}:exists;
-      $domain = %!domains{$domain-id};
-    }
-    $domain.load($text, $language);
+  method load(Str $text, $language-tag, $domain-id = Nil) {
+    self.domain($domain-id).load($text, $language-tag);
+  }
+  method add-basepath(Str $path, :$resource = False, :$lazy = True, :$domain-id = Nil) {
+    self.domain($domain-id).add-basepath($path, :$resource, :$lazy);
+  }
+  method add-basepaths(*@path where .map(*.isa: Str), :$resource = False, :$lazy = True, :$domain-id = Nil) {
+    self.add-basepath($_, :$resource, :$lazy) for @path;
+  }
+  method add-language($language-tag where Str|LanguageTag, :$domain-id = Nil) {
+    self.domain($domain-id).add-language($language-tag);
+  }
+  method add-languages(*@language-tags where .map(*.isa: Str|LanguageTag), :$domain-id = Nil) {
+    self.add-language($_, :$domain-id) for @language-tags;
+  }
+
+  method domain ($domain-id) {
+    return $!default-domain      unless $domain-id;
+    return %!domains{$domain-id} if %!domains{$domain-id}:exists;
+    return %!domains{$domain-id} = Domain.new;
   }
 
   ####################
@@ -133,10 +203,7 @@ class LocalizationManager is export {
       &!fallback-message(|($msg-id, $domain, |('' xx $_ -2))[0..^$_]);
     }
   }
-
 }
-
-
 
 # All of the subs in this module are effectively convenience methods to access
 # a special LocalizationManager which allows for much easier handling of the
@@ -148,7 +215,10 @@ sub localized                   (|c) is export  { $default.localized:      |c }
 sub load-localization           (|c) is export  { $default.load:           |c }
 sub set-localization-fallback   (|c) is export  { $default.set-fallback:   |c }
 sub reset-localization-fallback (|c) is export  { $default.reset-fallback: |c }
-
+sub add-localization-basepath   (|c) is export  { $default.add-basepath:   |c }
+sub add-localization-language   (|c) is export  { $default.add-language:   |c }
+sub add-localization-languages  (|c) is export  { $default.add-languages:  |c }
+sub ddd is export { $default }
 #sub files is export {
 #  %?RESOURCES;
 #}
