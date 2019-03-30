@@ -91,29 +91,26 @@ method attribute ($/) {
 method pattern ($/) {
   make $<pattern-element>.map(*.made);
 }
-method pattern-element:sym<inline-text> ($/) {
-  make InlineText.new(:text($<text-char>.map(*.Str).join));
-}
+
+# <inline-text> is currently unused, because it has been, ironically, inlined
+# into the <block-text> which is the only place it is used.
+#
+# method pattern-element:sym<inline-text> ($/) {
+#   make InlineText.new(:text($<text-char>.map(*.Str).join));
+# }
+
 method pattern-element:sym<block-text> ($/) {
   my $text   = $<indented-char>.Str; # guaranteed
-     $text  ~= $<inline-text>.made.txt if $<inline-text>; # optional
+     $text  ~= $<text-char>.Str if $<text-char>;
   my $indent = <blank-inline>.chars;
   make BlockText.new(:$text, :$indent);
 }
 
-method inline-text ($/) {
-  #say 'inline-text'
-  ;
-}
-method block-text ($/) {
-  #say "Given the following block text: ";
-  ;
-}
 method pattern-element:sym<inline-placeable> ($/) {
    make ($<select-expression> || $<inline-expression>).made;
  }
 method pattern-element:sym<block-placeable>  ($/) {
-  make ($<select-expression> || $<inline-expression>).made;
+   make ($<select-expression> || $<inline-expression>).made;
 }
 method inline-expression ($/) {
   make $<string-literal>.made

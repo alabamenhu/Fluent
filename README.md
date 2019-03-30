@@ -162,11 +162,12 @@ case, the fallback).  This is a result of the RFC4647 lookup method that BCP47
 implements.  
 
 # Version history
+  - 0.6.1
+    - Fixed a bug in inline block text
   - 0.6
     - First reasonably usable version (missing NUMBER/DATE functions)
     - Localization file structure added
     - Messages/Terms are now tested based on `Intl::BCP47`'s lookup.
     - API should be mostly frozen at this point.
-
   - 0.5
     - First semi working version

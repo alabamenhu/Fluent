@@ -71,9 +71,11 @@ unit grammar FTL;
   # Placeables can start at the beginning of a line or be indented.
   # Adjacent TextElements are joined in the AST creation.
   proto token pattern-element { * }
-        token pattern-element:sym<inline-text> { <text-char>+ }
+        # token pattern-element:sym<inline-text> { <text-char>+ }
+        # the formal definition of block-text places <inline-text> after
+        # indented character but this allows us to avoid some object creation
         token pattern-element:sym<block-text> {
-          <blank-block> <blank-inline> <indented-char> <inline-text>?
+          <blank-block> <blank-inline> <indented-char> <text-char>*?
         }
         token pattern-element:sym<inline-placeable> { # has full .t
           '{' <blank>?
@@ -198,7 +200,7 @@ unit grammar FTL;
   }
   proto token quoted-char {*}
         token quoted-char:sym<text> {
-          (<-[\" \\ \n]>)                #"
+          (<-[\" \\ \n]>)                #" Comment to kill bad syntax highlight
         }
         token quoted-char:sym<special-escape> {
           '\\' <special-quoted-char>
@@ -254,8 +256,8 @@ unit grammar FTL;
   }
   token line-end {
     # The standard allows for \r\n as well.  P6 considers \r, \n, and \r\n as
-    # equivalent for the purpose of line matching in regexes using \n.  I suppose
-    # theoretically \r by itself isn't supposed to count, but P6 will.
+    # equivalent for the purpose of line matching in regexes using \n.  I s'pose
+    # theoretically \r by itself isn't supposed to count, but 🤷🏼‍♂️
     \n
   }
   token blank-block {
