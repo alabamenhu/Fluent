@@ -2,51 +2,46 @@ unit class FTLActions;
 use Fluent::Classes;
 
 method TOP ($/) {
-  my @entries = (); $<entry>.map(*.made);
+  my @entries = $<entry>.map(*.made);
+  my @result = ();
   my $comment;
-  my @block-collector = ();
-  my $index = 0;
-  while $index < $<entry>.elems {
-    my $entry = $<entry>[$index].made;
 
-    given $entry {
-      ## comment special logic
+  while @entries {
+    given @entries.head {
       when Comment {
-        my $comments while
-          $<entry>[$index+ ++$comments].made      ~~ Comment
-          && $<entry>[$index+$comments].made.type == $entry.type;
-
-        $entry.merge($<entry>[$index+$_].made) for 1..^$comments;
-        $index += $comments;
-
-        if ($entry.type == 1
-            && $<entry>[$index].?made
-            && $<entry>[$index].made !~~ Comment
-        ) { # attach to the next and add
-          my $commented-entry = $<entry>[$index].made;
-          $commented-entry.comment = $entry;
-          push @entries, $commented-entry;
-          $index++;
-        } else { push @entries, $entry }
-        next;
+        # Comments need to be merged if they are of the same type
+        # and immediately follow each other
+        if $comment {
+          if $comment.type == @entries.head.type {
+            merge $comment: @entries.shift;
+          } else {
+            # Not the same, so place the previously tracked comment into the
+            # results, and place the new one on the stack;
+            push @result: $comment;
+            $comment = @entries.shift;
+          }
+        } else {
+          # no previously stored one
+          $comment = @entries.shift;
+        }
       }
-      when BlockText {
-          ;
-      }
-
       default {
         if $comment {
-          $entry.comment = $comment.text;
+          # If we tracked a comment, add it here iff type 1.  Otherwise it's
+          # technically a stand alone and we can either ignore or add it to
+          # the result pile (we do the latter for now). Eventually we may want
+          # to all the comment objects, if we ever decide to add in line numbers,
+          # etc for editing / debugging.
+          $comment.type == 1
+            ?? (@entries.head.comment = $comment.text)
+            !!  push @result: $comment;
           $comment = Nil;
         }
-        push @entries, $entry;
+        push @result: @entries.shift;
       }
     }
-
-    $index++;
   }
-
-  make @entries;
+  make @result;
 }
 
 method comment-line ($/) {
@@ -92,12 +87,12 @@ method pattern ($/) {
   make $<pattern-element>.map(*.made);
 }
 
-# <inline-text> is currently unused, because it has been, ironically, inlined
-# into the <block-text> which is the only place it is used.
-#
-# method pattern-element:sym<inline-text> ($/) {
-#   make InlineText.new(:text($<text-char>.map(*.Str).join));
-# }
+# This should formally be $<text-char>.map(*.Str).join) but since it's
+# just raw text, we can pass the matched text as such
+method pattern-element:sym<inline-text> ($/) {
+  my $text = $/.Str;
+  make InlineText.new(:$text);
+}
 
 method pattern-element:sym<block-text> ($/) {
   my $text   = $<indented-char>.Str; # guaranteed

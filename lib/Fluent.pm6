@@ -40,7 +40,7 @@ class Domain {
     method add-path ($path where IO::Path|Distribution::Resource, :$lazy = True) {
       $lazy
         ?? push @.unloaded-files, $path
-        !! self.load($path.slurp)
+        !! self.load($path.slurp);
     }
     # Both of these methods (message and term) also handle the lazy loading.
     # If the message/term isn't found, then each as-yet unloaded file is
@@ -74,30 +74,30 @@ class Domain {
     }
   }
 
-  has Str     $.id; # probably unnecessary
-  has Container %languages;
-  has BasePath  @base-paths;
+  has Str       $.id; # probably unnecessary
+  has Container %.languages;
+  has BasePath  @.base-paths;
 
   method message($id, @languages) {
-    my @candidates = lookup-language-tags(%languages.keys, @languages);
+    my @candidates = lookup-language-tags(%.languages.keys, @languages);
     for @candidates -> $candidate {
-      next unless my $message = %languages{$candidate}.message($id);
+      next unless my $message = %.languages{$candidate}.message($id);
       return $message;
     }
     Nil
   }
   method term($id, @languages) {
-    my @candidates = lookup-language-tags(%languages.keys, @languages);
+    my @candidates = lookup-language-tags(%.languages.keys, @languages);
     for @candidates -> $candidate {
-      next unless my $message = %languages{$candidate}.term($id);
+      next unless my $message = %.languages{$candidate}.term($id);
       return $message;
     }
     Nil
   }
 
   method load (Str $text, $language) {
-    %languages{$language} = Container.new unless %languages{$language}:exists;
-    %languages{$language}.load($text);
+    %.languages{$language} = Container.new unless %.languages{$language}:exists;
+    %.languages{$language}.load($text);
   }
 
   method add-basepath (Str() $path, Bool :$resource = False, :$lazy = True) {
@@ -105,15 +105,15 @@ class Domain {
     # Pass the new basepath to all existing languages and store it for
     # languages that added later;
     my $basepath = BasePath.new(:$path, :$resource);
-    %languages{$_}.add-path($basepath.file($_ ~ '.ftl')) for %languages.keys;
-    push @base-paths, $basepath;
+    %.languages{$_}.add-path($basepath.file($_ ~ '.ftl')) for %.languages.keys;
+    push @.base-paths, $basepath;
   }
   method add-language (Str() $language-tag) {
     # TODO check if langauge is already made and warn
     # Create a container, and populate it with all existing base paths.
     my $language = Container.new;
-    $language.add-path: $_.file($language-tag ~ '.ftl') for @base-paths;
-    %languages{$language-tag} = $language;
+    $language.add-path: $_.file($language-tag ~ '.ftl') for @.base-paths;
+    %.languages{$language-tag} = $language;
   }
 
 }

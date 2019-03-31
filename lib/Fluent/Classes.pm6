@@ -18,7 +18,8 @@ class Message is export {
   has @.patterns;
   has @.attributes;
   has $.comment is rw = "" ;
-  method gist (::?CLASS:D:) {
+  multi method gist (::?CLASS:U:) { "⁽ᴹ⁾" }
+  multi method gist (::?CLASS:D:) {
     "⁽ᴹ⁾$.identifier: "
     ~ "[" ~ @.patterns.map(*.gist).join( ' ') ~ "] "
     ~ "\{", @.attributes.map(*.gist).join( ' ' ), "\} #", $.comment.gist;
@@ -39,7 +40,8 @@ class Term is export {
   has @.patterns;
   has @.attributes;
   has $.comment is rw = "" ;
-  method gist (::?CLASS:D:) {
+  multi method gist (::?CLASS:U:) { "⁽ᵀ⁾" }
+  multi method gist (::?CLASS:D:) {
     "⁽ᵀ⁾$.identifier: "
     ~ "[" ~ @.patterns.map(*.gist).join( ' ') ~ "] "
     ~ "\{", @.attributes.map(*.gist).join( ' ' ), "\} #", $.comment.gist;
@@ -50,8 +52,11 @@ class Attribute is export {
     has $.identifier;
     has @.pattern;
     has $.comment is rw = "" ;
-    method gist (::?CLASS:D:) {
+    multi method gist (::?CLASS:D:) {
       "⁽ᴬ⁾$.identifier #", $.comment.gist;
+    }
+    multi method gist (::?CLASS:U:) {
+      "⁽ᴬ⁾"
     }
     method format (:$attribute) {
       @.pattern.map(*.format(:$attribute)).join;
@@ -67,8 +72,11 @@ role Argument {
 
 class InlineText does Pattern does Argument {
   has Str $.text is rw;
-  method gist (::?CLASS:D:) {
+  multi method gist (::?CLASS:D:) {
    '⁽ᵗˣᵗ⁾' ~ $.text.substr(0,max($.text.chars,8)) ~ '…'
+  }
+  multi method gist (::?CLASS:U:) {
+   '⁽ᵗˣᵗ⁾'
   }
   method format (:$attribute, :@arguments) {
     $.text;
@@ -83,8 +91,9 @@ class InlineText does Pattern does Argument {
 
 class BlockText does Pattern does Argument {
   has Str $.text is rw;
-  method gist (::?CLASS:D:) {
-   '⁽ᵗˣᵗ⁾' ~ $.text.substr(0,max($.text.chars,8)) ~ '…'
+  multi method gist (::?CLASS:U:) { '⁽ᵗˣᵗ⁾' }
+  multi method gist (::?CLASS:D:) { '⁽ᵗˣᵗ⁾'
+    ~ $.text.substr(0,max($.text.chars,8)) ~ '…'
   }
   method format () {
     $.text;
@@ -111,9 +120,8 @@ class Placeable does Pattern {
 class FunctionReference is Placeable does Pattern does Argument {
   has $.identifier;
   has @.arguments;
-  method gist (::?CLASS:D:) {
-    '⁽ᶠ⁾' ~ $.identifier.lc;
-  }
+  multi method gist (::?CLASS:U:) { '⁽ᶠ⁾'                   }
+  multi method gist (::?CLASS:D:) { '⁽ᶠ⁾' ~ $.identifier.lc }
   method format() {
     if $.identifier eq "DATE" {
       return '[date]';
@@ -128,9 +136,8 @@ class FunctionReference is Placeable does Pattern does Argument {
 
 class VariableReference is Placeable does Pattern does Argument {
   has $.identifier;
-  method gist (::?CLASS:D:) {
-    '⁽ˀ⁾' ~ $.identifier;
-  }
+  multi method gist (::?CLASS:U:) { '⁽ˀ⁾'                }
+  multi method gist (::?CLASS:D:) { '⁽ˀ⁾' ~ $.identifier }
   method argument-value {
     try { return $*VARIABLES{$.identifier}}
     '〖' ~ $.identifier ~ '〗'
@@ -144,10 +151,8 @@ class VariableReference is Placeable does Pattern does Argument {
 class MessageReference is Placeable does Pattern does Argument {
   has $.identifier;
   has $.attribute;
-  method gist (::?CLASS:D:) {
-    "[mr:$.identifier]"
-  }
-
+  multi method gist (::?CLASS:D:) { "[F|mr]"              }
+  multi method gist (::?CLASS:D:) { "[F|mr:$.identifier]" }
   method argument-value {
     $*MESSAGES{:$.attribute}.format
   }
@@ -161,10 +166,8 @@ class TermReference is Placeable does Pattern does Argument {
   has $.identifier;
   has $.attribute;
   has @.arguments;
-  method gist {
-    "[tr:$.identifier]"
-  }
-
+  multi method gist (::?CLASS:U:) { "[F|tr]"              }
+  multi method gist (::?CLASS:D:) { "[F|tr:$.identifier]" }
   method argument-value {
     $*MESAGES{:$.attribute, :@.arguments} # todo redo
   }
@@ -177,7 +180,8 @@ class Comment is export {
   has $.type;
   has $.text is rw;
 
-  method gist (::?CLASS:D:) {
+  multi method gist (::?CLASS:U:) { '⁽ᶜ⁾' }
+  multi method gist (::?CLASS:D:) {
     '⁽ᶜ'
     ~ do given $.type {
       when 1 { "¹" }

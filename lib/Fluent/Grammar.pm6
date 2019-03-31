@@ -56,13 +56,13 @@ unit grammar FTL;
   }
 
   #Attributes of Messages and Terms
-  token attribute { # has full .t
+  token attribute {
     <line-end> <blank>? '.' <identifier> <blank-inline>?
     '=' <blank-inline>? <pattern>
   }
 
   # Patterns are values of Messages, Terms, Attributes, and Variants
-  token pattern { # has full .t
+  token pattern {
     <pattern-element>+
   }
 
@@ -71,13 +71,14 @@ unit grammar FTL;
   # Placeables can start at the beginning of a line or be indented.
   # Adjacent TextElements are joined in the AST creation.
   proto token pattern-element { * }
-        # token pattern-element:sym<inline-text> { <text-char>+ }
-        # the formal definition of block-text places <inline-text> after
-        # indented character but this allows us to avoid some object creation
+        token pattern-element:sym<inline-text> { <text-char>+ }
         token pattern-element:sym<block-text> {
+          # the formal definition of block-text places <PE:inline-text> after
+          # indented character but this allows us to avoid some object creation
+          # since it's so basic
           <blank-block> <blank-inline> <indented-char> <text-char>*?
         }
-        token pattern-element:sym<inline-placeable> { # has full .t
+        token pattern-element:sym<inline-placeable> {
           '{' <blank>?
           [ <select-expression> | <inline-expression> ]
           <blank>? '}'
@@ -150,7 +151,7 @@ unit grammar FTL;
   # Identifier
   token identifier { <[a..zA..Z]> <[a..zA..Z0..9_\-]>* } # works, full .t
 
-  # COntent character
+  # Content character
   #
   # Translation content can be written using any Unicode characters.  However,
   # some characters are considered special depending on the type of content
