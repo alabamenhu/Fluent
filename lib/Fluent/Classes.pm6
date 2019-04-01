@@ -160,6 +160,7 @@ class VariableTermReference is Placeable does Pattern does Argument {
   multi method gist (::?CLASS:U:) { "[Ƒ›VariableTermReference]"   }
   multi method gist (::?CLASS:D:) { "[Ƒ›VarTermRef:$.identifier]" }
   method format (:$attribute, :%variables) {
+    note "Ƒluent: Variable Term References are an experimental feature and not compatible with other systems." unless $++;
     my %new-vars = ();
     %new-vars{$_.identifier} = $_.value.format(:$attribute, :%variables) for @.arguments;
     $*MANAGER
