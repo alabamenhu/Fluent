@@ -164,6 +164,8 @@ implements.
 # Version history
   - 0.6.1
     - Fixed a bug in inline block text
+    - Fixed major bugs in variable references and term references
+    - Added an experimental feature Variable Term References which is not currently part of the standard to demonstrate proof of concept
   - 0.6
     - First reasonably usable version (missing NUMBER/DATE functions)
     - Localization file structure added
