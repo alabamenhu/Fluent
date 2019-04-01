@@ -24,7 +24,10 @@ class Domain {
 
     # Immediately loads the FTL-formatted file into the container
     proto method load($){*}
-    multi method load($file) { say $file.WHAT; samewith $file.slurp }
+    multi method load($file) {
+      samewith $file.slurp if $file.IO.e;
+      warn "Could not locate localization file at ", $file.absolute;
+    }
     multi method load(Str $text) is default {
       use Fluent::Grammar;
       use Fluent::Actions;
@@ -146,13 +149,13 @@ class LocalizationManager is export {
       # 'variables', or if they just want to pass a stored list of variables
       %slurp-vars{%variables.keys} = %variables.values if %variables;
       my %*VARIABLES = %slurp-vars;
-
+      my @*LANGUAGES = @languages;
       # Redirects find-message and find-term to this object
       my $*MANAGER = self;
 
       # Get the message and return fallback if no message (Nil) found
       if my $message = self.find-message($message-id, $domain, :@languages) {
-        return $message.format(:$attribute)
+        return $message.format(:$attribute, :variables(%slurp-vars))
       } else {
         self.fallback($message-id, $domain);
       }

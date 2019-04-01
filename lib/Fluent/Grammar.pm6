@@ -113,11 +113,16 @@ unit grammar FTL;
         token reference-expression:sym<message-reference> { # works
           <identifier> <attribute-accessor>?
         }
-        token reference-expression:sym<term-reference> { # works
+        token reference-expression:sym<term-reference> {
           '-' <identifier> <attribute-accessor>? <call-arguments>?
         }
-        token reference-expression:sym<variable-reference> { # works
+        token reference-expression:sym<variable-reference> {
           '$' <identifier>
+        }
+        # Experimental - for use as an example with the issue at
+        # https://github.com/projectfluent/fluent/issues/80
+        token reference-expression:sym<variable-term-reference> {
+          '-$' <identifier> <attribute-accessor>? <call-arguments>?
         }
   token attribute-accessor { '.' <identifier> }
   token call-arguments { <blank>? '(' <blank>? <argument-list> <blank>? ')' }
@@ -204,7 +209,7 @@ unit grammar FTL;
           (<-[\" \\ \n]>)                #" Comment to kill bad syntax highlight
         }
         token quoted-char:sym<special-escape> {
-          '\\' <special-quoted-char>
+          "\\" <special-quoted-char>
         }
         token quoted-char:sym<unicode-escape> {
           | '\\u' (<[0..9a..fA..F]> ** 4)

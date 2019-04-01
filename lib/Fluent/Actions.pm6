@@ -64,7 +64,20 @@ method entry ($/) {
 }
 method message ($/) {
   my $identifier = $<identifier>.Str;
-  my @patterns = $<pattern>.made;
+  my @pre-patterns = $<pattern>.made;
+  my @patterns =  @pre-patterns.shift;
+
+  # this merge still isn't quite correct -- identations need to be correctly
+  # taken into account and they aren't, but that logic is fairly complicated
+  # and I'm not sure if it's best handled here or in Messages's creation method
+  # Single pass processing is NOT possible.
+  while my $foo =  @pre-patterns.shift {
+    if $foo ~~ BlockText && @patterns.tail ~~ BlockText|InlineText {
+      @patterns.tail.merge($foo)
+    }else{
+      push @patterns, $foo;
+    }
+  }
   my @attributes = $<attribute>.map(*.made);
   make Message.new(:$identifier, :@patterns, :@attributes);
 }
@@ -143,9 +156,18 @@ method reference-expression:sym<message-reference> ($/){
 method reference-expression:sym<term-reference> ($/){
   my $identifier = $<identifier>.Str;
   my $attribute = $<attribute-accessor>.made // Nil;
-  my @arguments = $<call-arguments>.made // Nil;
+  my @arguments = $<call-arguments>.made // Nil; # check for with no args
   make TermReference.new(:$identifier, :$attribute, :@arguments);
 }
+# Experimental, for use as an example with the issue at
+# https://github.com/projectfluent/fluent/issues/80
+method reference-expression:sym<variable-term-reference> ($/){
+  my $identifier = $<identifier>.Str;
+  my $attribute = $<attribute-accessor>.made // Nil;
+  my @arguments = $<call-arguments>.made // Nil; # check for with no args
+  make VariableTermReference.new(:$identifier, :$attribute, :@arguments);
+}
+
 method reference-expression:sym<variable-reference> ($/) {
   my $identifier = $<identifier>.Str;
   make VariableReference.new(:$identifier);

@@ -23,21 +23,22 @@ class NumExt {
   has $.w; # count of visible fraction digits, without trailing zeros
   has $.f; # visible fraction digits
   has $.t; # visible fractional digits without trailing zeros
+  proto method new(|c) { * }
   multi method new(Numeric $original) {
     samewith $original.Str;
   }
   multi method new(Str $original) {
     $original ~~ /^
-      ('-'?)        # negative marker [0]
-      ('0'*)          # leading zeros [1]
-      (<[0..9]>+)   # one or more integer values [2]
+      ('-'?)         # negative marker [0]
+      ('0'*)         # leading zeros [1]
+      (<[0..9]>+)    # one or more integer values [2]
       [
         '.'          #   decimal pointer
         (<[0..9]>*?) #   any number of decimals [3]
         ('0'*)       #   with trailing zeros [4]
       ]?             # decimal is optional
     $/;
-    die "Fluent uses numbers formatted as [-]123[.[456]].  Unable to process '$original'" unless $/;
+    return False unless $/; # equivalent of death
     my $n = $original.abs;
     my $i = $2.Str;
     my ($f, $t, $v, $w);
@@ -445,8 +446,10 @@ multi sub cldr-number-type($number, Str $lang) is export {samewith $number, Lang
 multi sub cldr-number-type($number, LanguageTag $tag) is export {
   # more robust handling necessary, theoretically, as some languages (*cough
   # Portuguese cough*) have country codes also included.  Hard code it?
-  my $num = NumExt.new($number);
-  return %cardinal-number-typifier{$tag.language.code}.cardinal($num)
-    if %cardinal-number-typifier{$tag.language.code}:exists;
-  other;
+  if my $num = NumExt.new($number) {
+    return %cardinal-number-typifier{$tag.language.code}.cardinal($num)
+        if %cardinal-number-typifier{$tag.language.code}:exists;
+    return other;
+  }
+  return False; # not a number
 }
