@@ -7,21 +7,24 @@ and Perl-y.
 
 ## Basic Usage
 
+```perl6
     use Fluent;
     add-localization-basepath('localization');
     add-localization-languages('en', 'es');
     say localized('helloworld');   #   ↪︎ "Hello World!" (if system set to English)
     say localized('helloworld');   #   ↪︎ "¡Hola mundo!" (if system set to Spanish)
+```
 
 If you store the result of a `localized` call, you’ll get a Hashy `Str`.  That
 means you can use it like a `Str` (because it is one), but if the message
 has attributes, you can access it via the normal associative ways:
 
+```perl6
     my  $translation = localized('greeting');
     say $translation;          #   ↪︎ "Hello!"
     say $translation<foo>;     #   ↪︎ "some related text"
     say $translation{'bar'};   #   ↪︎ "some other related text"
-
+```
 
 ## Subroutines
 
@@ -30,16 +33,16 @@ don't *have* to use them, but they implement an entire localization framework
 that only under rare circumstances would you want or need to handle manually.   
 
   * **localized**(Str *$message-id*, Str *:$domain?*, *:$language?*, *:@languages?*, :*%variables?*, *%slurp-vars*) returns **Str**  
-The function that you will use most often.  In common use, you will only need to  
-specify the `$message-id`, and maybe the `$domain` if your project uses them.  
-If you need to pass variables, you can use the  
-`%variables` named parameter, or alternative, specify the variables as  
-additional named parameters (using `%variables` is only required if the  
-name of the variable is one of the extant named parameters.  If you do not pass  
-any languages (which should be either `Str` or `LanguageTag`), the default  
+The function that you will use most often.  In common use, you will only need to
+specify the `$message-id`, and maybe the `$domain` if your project uses them.
+If you need to pass variables, you can use the
+`%variables` named parameter, or alternative, specify the variables as
+additional named parameters (using `%variables` is only required if the
+name of the variable is one of the extant named parameters.  If you do not pass
+any languages (which should be either `Str` or `LanguageTag`), the default
 languages will be used.
   * **add-localization-basepath**(Str *$path*, Str *:$domain?*, Bool *:$resource* = False, Bool, *:$lazy* = True)
-Adds the given path (directories need to end in `/`!) to the list of locations  
+Adds the given path (directories need to end in `/`!) to the list of locations
 where `.ftl` files can be found.  If used in a module, then pass the `:resource`
 adverb to have it search in the module’s resource folder.  Lazy loading is
 turned on by default.  Turning it off is mainly useful if you want to preparse
@@ -47,11 +50,11 @@ everything during a precompilation phase.
   * **add-localization-basepaths**(Str *@paths*, Str *:$domain?*, Bool *:$resource* = False, Bool, *:$lazy* = True)  
 Same as previous, but acts on a list of basepaths.
   * **add-localization-language**(*$language-tag*, Str *:$domain?*)  
-Adds the given language to the list of languages supported (this cannot be  
-automated because `%*RESOURCES` does not allow introspection of files).  If  
-any eager (non-lazy) basepaths were previously added, their associated `.ftl`  
-files will be loaded immediately.  The `$language-tag` may be either a `Str`  
-in valid BCP47 format or a `LanguageTag` (available in the `Intl::BCP47`  
+Adds the given language to the list of languages supported (this cannot be
+automated because `%*RESOURCES` does not allow introspection of files).  If
+any eager (non-lazy) basepaths were previously added, their associated `.ftl`
+files will be loaded immediately.  The `$language-tag` may be either a `Str`
+in valid BCP47 format or a `LanguageTag` (available in the `Intl::BCP47`
 package)
   * **add-localization-language**(*@language-tags*, Str *:$domain?*)  
 Same as previous, but acts on a list of language tags.  
@@ -64,8 +67,8 @@ to just use a single `Whatever` to make your life easy.  You can also pass a
   * **reset-localization-fallback**()  
 Resets the fall back to the default.
   * **load-localization**(Str *$fluent-document*, *$language-tag*, Str *$domain?*)  
-Loads the specified Fluent data (note: *not* a filename) for the given language  
-tag (as a BCP47 `Str` or a `LanguageTag`), optionally in the given domain.  Most  
+Loads the specified Fluent data (note: *not* a filename) for the given language
+tag (as a BCP47 `Str` or a `LanguageTag`), optionally in the given domain.  Most
 useful for testing, not as useful in actual production.
 
 # Formatting and organization
