@@ -1,30 +1,72 @@
-# Example
+# Introduction
 
-A Perl 6 module that implements Mozilla's Project Fluent.
+A Perl 6 module that implements Mozilla's Project Fluent.  This is an
+implementation based on the design documents, but it is not actually a port.
+The idea is to provide both an interface and code that is maintainable, usable,
+and Perl-y.
 
-This is an implementation based on the design documents, but it is not actually
-a port.  The idea is to provide both an interface and code that is
-maintainable, usable, and Perl-y.
+## Basic Usage
 
-An example of the usability is the value returned when formatting a Message.
+    use Fluent;
+    add-localization-basepath('localization');
+    add-localization-languages('en', 'es');
+    say localized('helloworld');   #   ↪︎ "Hello World!" (if system set to English)
+    say localized('helloworld');   #   ↪︎ "¡Hola mundo!" (if system set to Spanish)
 
-While it is technically a Str (and thus can be used anywhere a Str can be), the
-Fluent format allows for secondary messages to be attached called attributes.
-This owes to its origins as a framework for web translation where the attributes
-could autopopulate various child elements and attributes.  In Perl 6, you can
-access those attributes as if the result were a hash such that
+If you store the result of a `localized` call, you’ll get a Hashy `Str`.  That
+means you can use it like a `Str` (because it is one), but if the message
+has attributes, you can access it via the normal associative ways:
 
     my  $translation = localized('greeting');
-    say $translation; # ↪︎ "Hello!"
-    say $translation<foo>; # ↪︎ "some related text"
-    say $translation<bar>; # ↪︎ "some other related text"
+    say $translation;          #   ↪︎ "Hello!"
+    say $translation<foo>;     #   ↪︎ "some related text"
+    say $translation{'bar'};   #   ↪︎ "some other related text"
 
-Variables are passed using named arguments:
 
-    my $translationA = localized('greeting2', :who('Jane'));
-    say $translationA; # ↪︎ "Hello, Jane!"
-    my $translationB = localized('greeting2', :who('Jack'));
-    say $translationB; # ↪︎ "Hello, Jack!"
+## Subroutines
+
+When load the module, Fluent will export a handful of useful subroutines.  You
+don't *have* to use them, but they implement an entire localization framework
+that only under rare circumstances would you want or need to handle manually.   
+
+  * **localized**(Str *$message-id*, Str *:$domain?*, *:$language?*, *:@languages?*, :*%variables?*, *%slurp-vars*) returns **Str**  
+The function that you will use most often.  In common use, you will only need to  
+specify the `$message-id`, and maybe the `$domain` if your project uses them.  
+If you need to pass variables, you can use the  
+`%variables` named parameter, or alternative, specify the variables as  
+additional named parameters (using `%variables` is only required if the  
+name of the variable is one of the extant named parameters.  If you do not pass  
+any languages (which should be either `Str` or `LanguageTag`), the default  
+languages will be used.
+  * **add-localization-basepath**(Str *$path*, Str *:$domain?*, Bool *:$resource* = False, Bool, *:$lazy* = True)
+Adds the given path (directories need to end in `/`!) to the list of locations  
+where `.ftl` files can be found.  If used in a module, then pass the `:resource`
+adverb to have it search in the module’s resource folder.  Lazy loading is
+turned on by default.  Turning it off is mainly useful if you want to preparse
+everything during a precompilation phase.
+  * **add-localization-basepaths**(Str *@paths*, Str *:$domain?*, Bool *:$resource* = False, Bool, *:$lazy* = True)  
+Same as previous, but acts on a list of basepaths.
+  * **add-localization-language**(*$language-tag*, Str *:$domain?*)  
+Adds the given language to the list of languages supported (this cannot be  
+automated because `%*RESOURCES` does not allow introspection of files).  If  
+any eager (non-lazy) basepaths were previously added, their associated `.ftl`  
+files will be loaded immediately.  The `$language-tag` may be either a `Str`  
+in valid BCP47 format or a `LanguageTag` (available in the `Intl::BCP47`  
+package)
+  * **add-localization-language**(*@language-tags*, Str *:$domain?*)  
+Same as previous, but acts on a list of language tags.  
+  * **set-localization-fallback**(Callable *&fallback*)  
+If a localization cannot be found, the callable is called with two positional
+parameters: (1) the message ID and (2) the domain if applicable.  Fluent will
+pass the correct number of parameters, so if you don't use domains, feel free
+to just use a single `Whatever` to make your life easy.  You can also pass a
+`Str` if you want a static message.  
+  * **reset-localization-fallback**()  
+Resets the fall back to the default.
+  * **load-localization**(Str *$fluent-document*, *$language-tag*, Str *$domain?*)  
+Loads the specified Fluent data (note: *not* a filename) for the given language  
+tag (as a BCP47 `Str` or a `LanguageTag`), optionally in the given domain.  Most  
+useful for testing, not as useful in actual production.
 
 # Formatting and organization
 
@@ -79,43 +121,32 @@ directory would return something like **Fruitopia** but by changing the domain
 text for a store loaded, if we called `localized('buynow', :domain('fruit'))`,
 the text returned would be that defined by the fallback option.
 
-To define the fallback text, you can use either a string or some combination of
-strings and WhateverCode (`*`).  If you use WhateverCode, consider using two
-Whatevers to better debug.  Using the previous example, here's the text that
+To define the fallback text, you can use either a string, some combination of
+strings and WhateverCode (`*`), or some other callable.  If you use a `Callable`
+you might consider using two Whatevers or positional parameters to capture
+the domain as well.  Using the previous example, here's the text that
 would be returned based on different fall back text:
 
-    Fluent.set-fallback: '[No Localization Present]';
+    set-localization-fallback('[No Localization Present]');
     localized('buynow', :domain('fruit'));
     # ↪︎ [No Localization Present]
 
-    Fluent.set-fallback: '[MessageID:' ~ * ~ ']';
+    set-localization-fallback('[MessageID:' ~ * ~ ']');
     localized('buynow', :domain('fruit'));
     # ↪︎ [MessageID:buynow]
 
-    Fluent.set-fallback: '[﹖ ' ~ * ~ ' ← ' ~ *.uc ']';
+    set-localization-fallback('[﹖ ' ~ * ~ ' ← ' ~ *.uc ']');
     localized('buynow', :domain('fruit'));
     # ↪︎ [﹖ buynow ← FRUIT]
 
-If you only use a single Whatever (or positional, if you pass a block using, e.g.
-`$^a`), then be aware that the order is first the Message ID, second the domain
-(which is '' if no domain is specified).  If the arity is greater than 2 then
-all other parameters will be passed a blank string, although the third one *may*
-in the future also receive a hash of variables being passed.
+    set-localization-fallback( { '[$^b:$^a??]' };
+    localized('buynow', :domain('fruit'));
+    # ↪︎ [fruit:buynow??]
 
-# Other options
-
-If you want to exert more manual control over the loading of data, you can
-use the `load-localization` sub.  This method takes a string in FTL format,
-a language tag, and an optional domain as arguments:
-
-    load-localization("hello = Hello World!", "en");
-    localized('hello');
-    # ↪︎ Hello World!
-
-To specify the language that you want to pull the resource from, you can pass
-a language tag or tags using the adverbs :language and :languages respectively
-which will then override the user's default languages (as determined by the
-`Intl::BCP47` module).
+Be aware that the order of positional arguments is first the Message ID,
+second the domain (which is '' if no domain is specified).  If the arity is
+greater than 2 then all other parameters will be passed a blank string, although
+the third one *may* in the future also receive a hash of variables being passed.
 
 # Language Usage Notes
 
@@ -124,25 +155,24 @@ much of anything with it.  Fluent also needs to know which languages you intend
 to support.  Because the `resources` directory in modules is not able to be
 queried for files available, I made the decision to have the programmer tell
 Fluent which languages are available.  To enable a language, simply pass it or
-various to the `add-language` (single) or `add-languages` (convenience, calls
-`add-language` for each passed language) functions which takes *either* a
-LanguageTag *or* a Str representing a valid BCP47 language tag.  For the
-hypothetical module listed previously, we'd say:
+various to the `add-localization-language` (single) or `add-localization-languages`
+(convenience, calls `add-localization-language` for each passed language)
+functions which take *either* a LanguageTag *or* a Str representing a valid BCP47 language tag.  For the hypothetical module listed previously, we'd say:
 
-    Fluent.add-languages: 'ast', 'en', 'es-ES', 'es-MX', 'zh-Hant', 'zh-Hans';
+    add-localization-languages('ast', 'en', 'es-ES', 'es-MX', 'zh-Hant', 'zh-Hans');
 
 Once both languages and file paths have been loaded, only once there is a need
 for a language's localization files to be read will the `.ftl` be loaded and
 parsed.  However, if you want the files to be read into memory immediately,
 you can use the `:!lazy` adverb:
 
-    Fluent.add-basepath: 'foo/', :!lazy; # FTL files for all enabled languages
-                                         # will be loaded immediately, and will
-                                         # load immediately for any languages
-                                         # added in the future
+    add-localization-basepath('foo/') :!lazy; # FTL files for all enabled languages
+                                              # will be loaded immediately, and will
+                                              # load immediately for any languages
+                                              # added in the future
 
 This option is best suited when precompilation is beneficial so that the FTL
-files will be loaded at compilation.
+files will be loaded once.
 
 To determine the best fit language, Fluent uses the match algorithm in the
 `Intl::BCP47` module on a *per message/term* basis.  This means you can set a  
@@ -162,9 +192,11 @@ case, the fallback).  This is a result of the RFC4647 lookup method that BCP47
 implements.  
 
 # Version history
-  - 0.6.1
+  - 0.7
+    - Updated documents substantially
     - Fixed a bug in inline block text
     - Fixed major bugs in variable references and term references
+    - Corrected term attribute usage, particularly evident in selectors
     - Added an experimental feature Variable Term References which is not currently part of the standard to demonstrate proof of concept
   - 0.6
     - First reasonably usable version (missing NUMBER/DATE functions)

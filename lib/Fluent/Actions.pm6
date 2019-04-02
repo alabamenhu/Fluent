@@ -150,21 +150,24 @@ method reference-expression:sym<function-reference> ($/){
 }
 method reference-expression:sym<message-reference> ($/){
   my $identifier = $<identifier>;
-  my $attribute = $<attribute-accessor>.made // Nil;
+  my $attribute = $<attribute-accessor> ?? $<attribute-accessor>.made !! "";
   make MessageReference.new(:$identifier, :$attribute);
 }
 method reference-expression:sym<term-reference> ($/){
   my $identifier = $<identifier>.Str;
-  my $attribute = $<attribute-accessor>.made // Nil;
-  my @arguments = $<call-arguments>.made // Nil; # check for with no args
+  my $attribute = $<attribute-accessor> ?? $<attribute-accessor>.made !! "";
+  my @arguments = $<call-arguments> ?? $<call-arguments>.made !! ();
   make TermReference.new(:$identifier, :$attribute, :@arguments);
 }
 # Experimental, for use as an example with the issue at
 # https://github.com/projectfluent/fluent/issues/80
 method reference-expression:sym<variable-term-reference> ($/){
   my $identifier = $<identifier>.Str;
-  my $attribute = $<attribute-accessor>.made // Nil;
-  my @arguments = $<call-arguments>.made // Nil; # check for with no args
+  my $attribute = $<attribute-accessor> ?? $<attribute-accessor>.made !! "";
+  my @arguments = $<call-arguments> ?? $<call-arguments>.made !! ();
+  # possible bug, doing $<call-arguments>.made results in [(Any)], so passes the
+  # definedor operator check, and thus  $<call-arguments>.made // () doesn't
+  # work as expected
   make VariableTermReference.new(:$identifier, :$attribute, :@arguments);
 }
 
@@ -176,8 +179,8 @@ method reference-expression:sym<variable-reference> ($/) {
 method attribute-accessor ($/){
   make $<identifier>.Str;
 }
-method call-arguments ($/) { make     $<argument-list>.made }
-method argument-list  ($/) { make   $<argument>.map: *.made }
+method call-arguments ($/) { make     $<argument-list>.made; }
+method argument-list  ($/) { make   $<argument>.map: *.made; }
 method argument       ($/) {
   if (?$<inline-expression>) {
     make PositionalArgument.new(:argument($<inline-expression>.made));

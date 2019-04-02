@@ -161,27 +161,36 @@ class LocalizationManager is export {
       }
   }
 
-  method find-message($id, $domain-id = Nil, :@languages = @!default-languages) {
+  method find-message(
+    $id,
+    $domain-id = Nil, #  ⬇︎ dyanmic variable allows for cleaner nesting
+    :@languages = (@*LANGUAGES // @!default-languages)) {
     self.domain($domain-id).message: $id, @languages;
   }
-  method find-term($id, $domain-id = Nil, :@languages = @!default-languages) {
+  method find-term(
+    $id,
+    $domain-id = Nil, #  ⬇︎ dyanmic variable allows for cleaner nesting
+    :@languages = (@*LANGUAGES // @!default-languages)) {
     self.domain($domain-id).term: $id, @languages;
   }
 
-  method load(Str $text, $language-tag, $domain-id = Nil) {
-    self.domain($domain-id).load($text, $language-tag);
+  method load(Str $text, $language-tag, $domain = "") {
+    self.domain($domain).load($text, $language-tag);
   }
-  method add-basepath(Str $path, :$resource = False, :$lazy = True, :$domain-id = Nil) {
-    self.domain($domain-id).add-basepath($path, :$resource, :$lazy);
+  method add-basepath(Str $path, :$resource = False, :$lazy = True, :$domain = "") {
+    self.domain($domain).add-basepath($path, :$resource, :$lazy);
   }
-  method add-basepaths(*@path where .map(*.isa: Str), :$resource = False, :$lazy = True, :$domain-id = Nil) {
-    self.add-basepath($_, :$resource, :$lazy) for @path;
+  method add-basepaths(*@path where .map(*.isa: Str), :$resource = False, :$lazy = True, :$domain = "") {
+    self.domain($domain).add-basepath($_, :$resource, :$lazy) for @path;
   }
-  method add-language($language-tag where Str|LanguageTag, :$domain-id = Nil) {
-    self.domain($domain-id).add-language($language-tag);
+  method add-language($language-tag where Str|LanguageTag, :$domain = "") {
+    self.domain($domain).add-language($language-tag);
   }
-  method add-languages(*@language-tags where .map(*.isa: Str|LanguageTag), :$domain-id = Nil) {
-    self.add-language($_, :$domain-id) for @language-tags;
+  multi method add-languages(*@language-tags, :$domain = "") {
+    self.add-language($_, :$domain) for @language-tags;
+  }
+  multi method add-languages(@language-tags, :$domain = "") {
+    self.add-language($_, :$domain) for @language-tags;
   }
 
   method domain ($domain-id) {

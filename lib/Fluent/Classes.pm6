@@ -22,9 +22,9 @@ class Message is export {
   multi method gist (::?CLASS:D:) { "[Ƒ›Msg:$.identifier]" }
 
   method format (:$attribute = Nil, :%variables) {
-    my $primary = @.patterns.map(*.format(:$attribute)).join;
+    my $primary = @.patterns.map(*.format(:$attribute, :%variables)).join;
     my %secondary = gather {
-      take ($_.identifier => $_.format(:$attribute)) for @.attributes;
+      take ($_.identifier => $_.format(:$attribute,  :%variables)) for @.attributes;
     }
     #return $primary;
     return StrHash($primary, %secondary);
@@ -39,12 +39,23 @@ class Term is export {
   multi method gist (::?CLASS:U:) { "[Ƒ›Term]"          }
   multi method gist (::?CLASS:D:) { "[Ƒ›Term:$.identifier" }
   method format (:$attribute = Nil, :%variables = ()) {
-    my $primary = @.patterns.map(*.format(:$attribute, :%variables)).join;
-    my %secondary = gather {
-      take ($_.identifier => $_.format(:$attribute, :%variables)) for @.attributes;
+    if $attribute {
+      # Need to get a specific attribute
+      # These should probably be stored into a hash for quicker access in
+      # the future, as their order doesn't matter
+      for @.attributes {
+        return $_.format(:attribute(Nil), :%variables)
+            if $_.identifier eq $attribute;
+      }
+      return "-$.identifier" ~ ".$attribute"; # could not find it; the better
+                                              # default might be the message?
+    } else {
+      # Return the main attribute.  Terms attributes are considered hidden from
+      # code so we only need to return the primary pattern, and not any
+      # attributes in a StrHash like is done with Messages.  If the standard
+      # changes, then modify this section to match Messages' format
+      return @.patterns.map(*.format(:$attribute, :%variables)).join;
     }
-    #return $primary;
-    return StrHash($primary, %secondary);
   }
 }
 
@@ -147,7 +158,7 @@ class TermReference is Placeable does Pattern does Argument {
     for @.arguments {
       %new-vars{$_.identifier} = $_.value.format(:$attribute, :%variables);
     }
-    $*MANAGER.find-term($.identifier).format(:$.attribute, :variables(%new-vars))
+    $*MANAGER.find-term($.identifier).format(:$.attribute, :variables(%new-vars));
   }
 }
 
@@ -160,7 +171,7 @@ class VariableTermReference is Placeable does Pattern does Argument {
   multi method gist (::?CLASS:U:) { "[Ƒ›VariableTermReference]"   }
   multi method gist (::?CLASS:D:) { "[Ƒ›VarTermRef:$.identifier]" }
   method format (:$attribute, :%variables) {
-    note "Ƒluent: Variable Term References are an experimental feature and not compatible with other systems." unless $++;
+    note "\e[31mƑluent: Variable Term References are \e[1m\e[91mexperimental\e[0m\e[31m and not compatible with other systems.\e[39m" unless $++;
     my %new-vars = ();
     %new-vars{$_.identifier} = $_.value.format(:$attribute, :%variables) for @.arguments;
     $*MANAGER

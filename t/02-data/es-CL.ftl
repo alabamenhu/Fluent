@@ -1,0 +1,2 @@
+-computer = computador
+  .gender = m
