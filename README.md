@@ -195,13 +195,13 @@ case, the fallback).  This is a result of the RFC4647 lookup method that BCP47
 implements.  
 
 # Version history
-  - 0.7
+  - 0.7 “Cheaha”
     - Updated documents substantially
     - Fixed a bug in inline block text
     - Fixed major bugs in variable references and term references
     - Corrected term attribute usage, particularly evident in selectors
     - Added an experimental feature Variable Term References which is not currently part of the standard to demonstrate proof of concept
-  - 0.6
+  - 0.6 “Blackjack”
     - First reasonably usable version (missing NUMBER/DATE functions)
     - Localization file structure added
     - Messages/Terms are now tested based on `Intl::BCP47`'s lookup.

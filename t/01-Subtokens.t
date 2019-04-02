@@ -40,10 +40,9 @@ subtest "Variant" => {
                              ]def ', :rule('variant'));
   ok FTL.subparse('
    [ 123 ] def', :rule('variant'));
-# TODO Currently does not pass.
-#  ok FTL.parse('
-#     [ 123 ]
-#def', :rule('variant'));
+  ok FTL.parse('
+     [ 123 ]
+  def', :rule('variant')); # initial space mandatory, otherwise begins a new message
 }
 
 subtest "Default Variant" => {
@@ -59,10 +58,9 @@ subtest "Default Variant" => {
     *[ 123 ]  def', :rule('default-variant'));
   nok FTL.subparse('
   * [abc] def', :rule('default-variant'));
-# TODO Currently does not pass.
-#  ok FTL.subparse('
-#  *[abc]
-#def', :rule('default-variant'));
+  ok FTL.subparse('
+  *[abc]
+ def', :rule('default-variant'));  # initial space mandatory, otherwise begins a new message
 }
 
 subtest "Variant List" => {
