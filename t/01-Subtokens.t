@@ -195,4 +195,4 @@ subtest "Message" => {
                             def', :rule('message'));
 
 }
-done-testing()
+done-testing();

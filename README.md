@@ -96,14 +96,18 @@ To let Fluent know where the files are, give it the base file path onto
 which it will add language codes (which may end in a `/` or not, but I find it
 easiest to keep them all in a folder, but you may want them prefixed elsewise).
 
+```perl6
     add-localization-basepath('localization/', :resources);
+```
 
 The `:resources` adverb lets the module know to look in the `%*RESOURCES`
 variable for the file.  If the file is on the hard drive, don't use it,
 and just reference the file path as you would any other.  For example, in another
 project where we've named files 'ui_en.ftl', 'ui_es-ES.ftl', etc, we might say:
 
+```perl6
     add-localization-basepath('data/l10n/ui_');
+```
 
 You also have an additional option to group the terms into various *domains*.
 This may be useful if you plan to handle several different
@@ -113,10 +117,12 @@ all about fruits, and another called Vegitania all about vegetables, with vastly
 different sets of text, we could load (and access them) by using the `:domain`
 argument:
 
+```perl6
     add-localization-basepath($root ~ 'fruitopia/text/email/', :domain('fruit') );
     add-localization-basepath($root ~ 'fruitopia/text/ui/',    :domain('fruit') );
     add-localization-basepath($root ~ 'fruitopia/text/store/', :domain('veggie'));
     add-localization-basepath($root ~ 'fruitopia/text/ui/',    :domain('veggie'));
+```
 
 With this set up, using `localized('sitename', :domain('fruit'))` contained in the `ui/`
 directory would return something like **Fruitopia** but by changing the domain
@@ -130,6 +136,7 @@ you might consider using two Whatevers or positional parameters to capture
 the domain as well.  Using the previous example, here's the text that
 would be returned based on different fall back text:
 
+```perl6
     set-localization-fallback('[No Localization Present]');
     localized('buynow', :domain('fruit'));
     # ↪︎ [No Localization Present]
@@ -145,6 +152,7 @@ would be returned based on different fall back text:
     set-localization-fallback( { '[$^b:$^a??]' };
     localized('buynow', :domain('fruit'));
     # ↪︎ [fruit:buynow??]
+```
 
 Be aware that the order of positional arguments is first the Message ID,
 second the domain (which is '' if no domain is specified).  If the arity is
@@ -162,17 +170,21 @@ various to the `add-localization-language` (single) or `add-localization-languag
 (convenience, calls `add-localization-language` for each passed language)
 functions which take *either* a LanguageTag *or* a Str representing a valid BCP47 language tag.  For the hypothetical module listed previously, we'd say:
 
+```perl6
     add-localization-languages('ast', 'en', 'es-ES', 'es-MX', 'zh-Hant', 'zh-Hans');
+```
 
 Once both languages and file paths have been loaded, only once there is a need
 for a language's localization files to be read will the `.ftl` be loaded and
 parsed.  However, if you want the files to be read into memory immediately,
 you can use the `:!lazy` adverb:
 
+```perl6
     add-localization-basepath('foo/') :!lazy; # FTL files for all enabled languages
                                               # will be loaded immediately, and will
                                               # load immediately for any languages
                                               # added in the future
+```
 
 This option is best suited when precompilation is beneficial so that the FTL
 files will be loaded once.
@@ -200,6 +212,7 @@ implements.
     - Fixed a bug in inline block text
     - Fixed major bugs in variable references and term references
     - Corrected term attribute usage, particularly evident in selectors
+    - Moved the CLDR Plural logic into a separate module (Intl::CLDR) where it is better suited.
     - Added an experimental feature Variable Term References which is not currently part of the standard to demonstrate proof of concept
   - 0.6 “Blackjack”
     - First reasonably usable version (missing NUMBER/DATE functions)

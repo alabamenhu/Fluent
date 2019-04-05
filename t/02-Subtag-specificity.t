@@ -1,6 +1,7 @@
 use Test;
 use Fluent;
 
+
 add-localization-basepath("t/02-data/");
 add-localization-languages("es", "es-ES", "es-AR", "es-CL");
 
@@ -22,5 +23,4 @@ is localized("nicecomputer", :languages<es es-CL>), "Es un buen computador.";
 # es-AR exists, but -computer isn't found, so fall back to "es"
 # This one is currently buggy, TODO: fix it
 #is localized("nicecomputer", :language<es-AR>), "Es una buena computadora.";
-
 done-testing();

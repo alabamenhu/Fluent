@@ -1,5 +1,6 @@
 use Fluent::Number;
 use Intl::BCP47;
+#use Intl::CLDR::Plurals;
 
 sub StrHash ($s, %h --> Str)  {
   $s but (
@@ -247,7 +248,7 @@ class NumberLiteral does Literal does Pattern {
     my $text = $sign ~ $integer ~ ("." ~ $decimal if ?$decimal);
     self.bless(:$plusminus, :$integer, :$decimal, :$text, :$value);
   }
-  method format { return $.value.Str }
+  method format { return $.text }
 }
 
 
@@ -291,20 +292,27 @@ class Select is Placeable does Pattern  {
   multi method gist (::?CLASS:U:) {  '[Ƒ›Select]'                           }
   multi method gist (::?CLASS:D:) {  '[Ƒ›Sel:' ~ (@.others.elems + 1) ~ ']' }
   method format (:$attribute = "", :%variables = ()) { ## todo check string vs number
+    use Intl::CLDR::Plurals;
     my $selector = $.selector.format(:$attribute, :%variables);
-    # [Attempt 1] Check the exact string from the selector
+
+    # [Attempt 1] Check the exact string from the selector for the default variant
+    return $.default.format if $.default.identifier.format eq $selector;
+
+    # [Attempt 2] Check the exact string from the selector for non-default variants
     for @.others -> $variant {
-      return $variant.format if $variant.identifier.format eq $selector;
+      return $variant.format if $variant.identifier.format eq $selector
     }
-    # [Attempt 2] Check for the number category if it's possible.
+
+    # [Attempt 3] Check for the number category if it's possible.
     # The language needs to be modified slightly, so that it can know which
     # language the term/message was loaded in. TODO
-    if $selector = cldr-number-type($selector, @*LANGUAGES.head) {
+    if $selector = plural-count($selector, @*LANGUAGES.head) {
       for @.others -> $variant {
-        return $variant.format if $variant.identifier eq $selector;
+        return $variant.format if $variant.identifier eq $selector
       }
     }
-    # And finally, if everything fails, the default
+
+    # [Attempt 4] And finally, if everything fails, the default
     return $.default.format;
   }
 }

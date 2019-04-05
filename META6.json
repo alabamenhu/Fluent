@@ -7,7 +7,7 @@
   "authors"       : ["Matthew ‘Matéu’ Stephen STUCKWISCH <mateu@softastur.com>"],
   "auth"          : "github:alabamenhu",
   "license"       : "Artistic-2.0",
-  "depends"       : [ "Intl::BCP47" ],
+  "depends"       : [ "Intl::BCP47", "Intl::CLDR::Plurals" ],
   "build-depends" : [ ],
   "test-depends"  : [ ],
   "resources"     : [ ],
@@ -15,8 +15,7 @@
     "Fluent"                 : "lib/Fluent.pm6",
     "Fluent::Grammar"        : "lib/Fluent/Grammar.pm6",
     "Fluent::Actions"        : "lib/Fluent/Actions.pm6",
-    "Fluent::Classes"        : "lib/Fluent/Classes.pm6",
-    "Fluent::Number"         : "lib/Fluent/Number.pm6"
+    "Fluent::Classes"        : "lib/Fluent/Classes.pm6"
   },
   "tags"          : [
     "Language", "Tag", "Localization", "Locale", "International",
