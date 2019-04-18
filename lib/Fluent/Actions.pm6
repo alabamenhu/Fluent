@@ -195,10 +195,33 @@ method named-argument ($/) {
 }
 method select-expression ($/){
   my $selector = $<inline-expression>.made;
-  my %variants = $<variant-list>.made;
-  my @others = %variants<others><>;
-  my $default = %variants<default>;
-  make Select.new(:$selector, :$default, :@others);
+  my %variant-list = $<variant-list>.made;
+  my @others = %variant-list<others><>;
+  my $default = %variant-list<default>;
+  my %variants;
+  say %variant-list;
+  for %variant-list<others><> -> $variant {
+    if $variant.identifier ~~ NumberLiteral {
+      # This allows for matching both the value (via P6's internal Num->Str formatter)
+      # and also via String matching.  Consider a number like +5, which should match
+      # 5.0 by value and '+5' the string as well.
+      %variants{$variant.identifier.value} = $variant;
+      %variants{$variant.identifier.text} := %variants{$variant.identifier.value};
+    }else{
+      %variants{$variant.identifier} = $variant
+    }
+  }
+  if $default.identifier ~~ NumberLiteral {
+    say "DEFAULT IDENTIFIER IS";
+    # See text above about the numeric vs string match
+    %variants{$default.identifier.value} := $default;
+    %variants{$default.identifier.text}  := $default;
+  }else{
+    %variants{$default.identifier} := $default
+  }
+
+  say %variants;
+  make Select.new(:$selector, :$default, :@others, :%variants);
 }
 method variant-list ($/){
   my @variants = $<variant>.map(*.made);

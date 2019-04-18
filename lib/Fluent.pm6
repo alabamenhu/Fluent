@@ -234,3 +234,7 @@ sub ddd is export { $default }
 #sub files is export {
 #  %?RESOURCES;
 #}
+
+sub with-args(*@positional, *%named) is export {
+  CodeArguments.new(:@positional, :%named)
+}

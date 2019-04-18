@@ -110,6 +110,27 @@ class Placeable does Pattern {
   method format() { ... }
 }
 
+class PositionalArgument does Argument {
+  has Pattern $.argument;
+  method argument-value(|c) {
+    return $.argument.format(|c);
+  }
+  method gist (::?CLASS:D:) {
+    '[Ƒ›PosArg:' ~ $.argument.gist ~ ']'
+  }
+}
+
+class NamedArgument does Argument {
+  has Str $.identifier;
+  has $.value; # Literal Role?
+  method argument-value {
+    return $.value.format;
+  }
+  method gist (::?CLASS:D:) {
+     '[Ƒ›NamedArg:' ~ $.identifier ~ ":" ~ $.value.gist ~ ']'
+  }
+}
+
 
 # not done
 class FunctionReference is Placeable does Pattern does Argument {
@@ -117,11 +138,17 @@ class FunctionReference is Placeable does Pattern does Argument {
   has @.arguments;
   multi method gist (::?CLASS:U:) { '[Ƒ›FunctionReference]'              }
   multi method gist (::?CLASS:D:) { '[Ƒ›FuncRef:' ~ $.identifier.lc ~ ']'}
-  method format() {
+  method format(|c) {
+    use Fluent::Functions;
+
+    my @positionals = @.arguments.grep(* ~~ PositionalArgument).map(*.argument-value(|c));
+    my %named;
+    @.arguments.grep(* ~~ NamedArgument).map({ %named{.identifier} = .argument-value(|c)});
+
     if $.identifier eq "DATE" {
       return '[date]';
     }elsif $.identifier eq "NUMBER" {
-      return '[number]';
+      return function('NUMBER').(|@positionals, |%named);
     }
   }
 }
@@ -180,6 +207,8 @@ class VariableTermReference is Placeable does Pattern does Argument {
       .format(:$.attribute, :variables(%new-vars))
   }
 }
+
+
 class Comment is export {
   has $.type;
   has $.text is rw;
@@ -235,7 +264,7 @@ class NumberLiteral does Literal does Pattern {
   has Str $.integer;
   has Str $.decimal;
   has Str $.text; # what it was derived from;
-  has Num $.value;
+  has Numeric $.value;
 
   multi method gist (::?CLASS:U:) { '[Ƒ›NumberLiteral' }
   multi method gist (::?CLASS:D:) { return '[Ƒ›NumLit:' ~ ($.plusminus == 1 ?? '+' !! '-') ~ $.integer ~ '.' ~ $.decimal ~ ']' }
@@ -244,33 +273,11 @@ class NumberLiteral does Literal does Pattern {
   # The number literal is effectively matched as a string
   method new (:$sign, :$integer, :$decimal) {
     my $plusminus = $sign eq "-" ?? -1 !! 1;
-    my $value = Num.new(($integer // '0') ~ ('.' ~ $decimal if $decimal ne '')) * $plusminus;
+    my $value = ((($integer // '0') ~ ('.' ~ $decimal if $decimal ne '')) * $plusminus).Numeric;
     my $text = $sign ~ $integer ~ ("." ~ $decimal if ?$decimal);
     self.bless(:$plusminus, :$integer, :$decimal, :$text, :$value);
   }
   method format { return $.text }
-}
-
-
-class PositionalArgument does Argument {
-  has Pattern $.argument;
-  method argument-value {
-    return $.argument.format;
-  }
-  method gist (::?CLASS:D:) {
-    '[[' ~ $.argument.gist ~ ']]'
-  }
-}
-
-class NamedArgument does Argument {
-  has Str $.identifier;
-  has Literal $.value;
-  method argument-value {
-    return $.value.format;
-  }
-  method gist (::?CLASS:D:) {
-     '[[' ~ $.identifier ~ ":" ~ $.value.gist ~ ']]'
-  }
 }
 
 class Variant {
@@ -278,7 +285,10 @@ class Variant {
   has $.identifier;
   has @.patterns;
   multi method gist (::?CLASS:U:) { '[Ƒ›Variant]'           }
-  multi method gist (::?CLASS:D:) { '[Ƒ›Vrnt:$.identifier]' }
+  multi method gist (::?CLASS:D:) {
+    '[Ƒ›' ~ ('Def' if $.default) ~ 'Vrnt:'
+    ~ ($.identifier ~~ NumberLiteral ?? $.identifier.text !! $.identifier) ~ "]"
+  }
   method format (:$attribute) {
     @.patterns.map(*.format(:$attribute)).join;
   }
@@ -287,7 +297,8 @@ class Variant {
 class Select is Placeable does Pattern  {
   has $.selector;
   has $.default;
-  has @.others;
+  has @.others; # this should be redone in a hash, binding the default to the hash TODO
+  has %.variants;
 
   multi method gist (::?CLASS:U:) {  '[Ƒ›Select]'                           }
   multi method gist (::?CLASS:D:) {  '[Ƒ›Sel:' ~ (@.others.elems + 1) ~ ']' }
@@ -295,29 +306,34 @@ class Select is Placeable does Pattern  {
     use Intl::CLDR::Plurals;
     my $selector = $.selector.format(:$attribute, :%variables);
 
-    # [Attempt 1] Check the exact string from the selector for the default variant
-    return $.default.format if $.default.identifier.format eq $selector;
+    # Check first for exact match
+    .format(:$attribute, :%variables).return with %.variants{$selector};
 
-    # [Attempt 2] Check the exact string from the selector for non-default variants
-    for @.others -> $variant {
-      return $variant.format if $variant.identifier.format eq $selector
+    if is-numeric $selector -> $number {
+      # [1] Check if the number form exists
+      #     (for example, input of +5.0 can match [5] in this block)
+      # [2] Check for plural forms
+      .format(:$attribute, :%variables).return with %.variants{$number};
+      my $plural = plural-count($selector, @*LANGUAGES.head);
+      .format(:$attribute, :%variables).return with %.variants{$plural};
     }
 
-    # [Attempt 3] Check for the number category if it's possible.
-    # The language needs to be modified slightly, so that it can know which
-    # language the term/message was loaded in. TODO
-    if $selector = plural-count($selector, @*LANGUAGES.head) {
-      for @.others -> $variant {
-        return $variant.format if $variant.identifier eq $selector
-      }
-    }
+    # When all else fails, default
+    $.default.format(:$attribute, :%variables);
+  }
 
-    # [Attempt 4] And finally, if everything fails, the default
-    return $.default.format;
+  sub is-numeric ($x) {
+    try {
+      CATCH { return False }
+      return $x.Numeric but True;
+    }
   }
 }
 
-
+class CodeArguments {
+  has @.positional;
+  has %.named;
+}
 
 
 class Junk is export {

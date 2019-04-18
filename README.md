@@ -70,6 +70,10 @@ Resets the fall back to the default.
 Loads the specified Fluent data (note: *not* a filename) for the given language
 tag (as a BCP47 `Str` or a `LanguageTag`), optionally in the given domain.  Most
 useful for testing, not as useful in actual production.
+* **with-args**(*|c*)  
+This function is mixes in the arguments into anything.  Its primary use is for
+the `NUMBER` and `DATETIME` functions to pass complex formatting information
+in an easy to read manner.
 
 # Formatting and organization
 
@@ -206,7 +210,62 @@ that point, it will just go to the next best choice (or the default or, worst
 case, the fallback).  This is a result of the RFC4647 lookup method that BCP47
 implements.  
 
+# Perl 6 implementation details
+
+This module makes use of mixins to match features of other implementations in a
+clean and intuitive manner.  There are two main areas where they are used:
+
+## The Hashy Str
+
+The `localized` routine always returns a `Str`, but if the message also has
+attributes, they are mixed in in a `Hash`-like manner and can be accessed as if
+the result were a `Hash`;
+
+```perl6
+    my  $translation = localized('greeting');
+    say $translation;          #   ↪︎ "Hello!"
+    say $translation<foo>;     #   ↪︎ "some related text"
+    say $translation{'bar'};   #   ↪︎ "some other related text"
+```
+
+## Who doesn't like `but`s?
+
+To take advantage of the partial arguments, you can use the function `with-args`
+after a `but`.  Functions that take arguments can then access them in addition
+to the localizer’s arguments.  For example:
+
+```perl6
+my $weight = 5 but with-args(:3minimum-fraction-digits);
+localized 'kilograms', :$weight; #   ↪︎ "It weighs 5.000 kg"
+```
+
+It can be done in one fell swoop, and actually ends up a bit cleaner (IMO) than
+the Javascript version (with only two parentheses at the end, rather than two
+parentheses and two brackets):
+
+```javascript
+FluentBundle.format('proportion', {amount: FluentNumber(5, {minimumFractionDigits: 3, style: 'percent'})})
+```
+```perl6
+localized 'proportion', :amount( 5 but with-args(:3minimum-fraction-digits, :style<percent>) );
+```
+
+(You may even want to do a quick `&format = &with-args` so you can make your
+code even prettier, *with-args* was chosen to be as generic as possible.)
+
+## camelCase vs. kebab-case
+
+Fluent's built in functions `NUMBER` and `DATETIME` take arguments in camelCase.
+Because those aren't as natural to Perl 6 programmers (and aren’t what Intl::CLDR
+uses), you can *also* use kebab-case arguments.   This *only* applies to
+arguments supplied code-side.  Any arguments from the `.ftl` *must* use
+camelCase to ensure compatibility with other implementations.
+
 # Version history
+  - 0.8 “Alcovy”
+    - Added support for the `NUMBER` function (currency formatting will be available when Intl::CLDR supports it)
+    - Improved handling for functions in general, including the ability for programs to add their own functions.
+    - Updated test files.
   - 0.7 “Cheaha”
     - Updated documents substantially
     - Fixed a bug in inline block text
