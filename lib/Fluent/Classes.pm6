@@ -27,7 +27,6 @@ class Message is export {
     my %secondary = gather {
       take ($_.identifier => $_.format(:$attribute,  :%variables)) for @.attributes;
     }
-    #return $primary;
     return StrHash($primary, %secondary);
   }
 }
@@ -44,11 +43,11 @@ class Term is export {
       # Need to get a specific attribute
       # These should probably be stored into a hash for quicker access in
       # the future, as their order doesn't matter
-      for @.attributes {
-        return $_.format(:attribute(Nil), :%variables)
-            if $_.identifier eq $attribute;
+      for @!attributes {
+        return .format(:attribute(Nil), :%variables)
+            if .identifier eq $attribute;
       }
-      return "-$.identifier" ~ ".$attribute"; # could not find it; the better
+      return "-$!identifier" ~ ".$attribute"; # could not find it; the better
                                               # default might be the message?
     } else {
       # Return the main attribute.  Terms attributes are considered hidden from
@@ -84,10 +83,10 @@ class BlockText does Pattern does Argument {
   multi method gist (::?CLASS:U:) { '[Ƒ›BlockText]'                        }
   multi method gist (::?CLASS:D:) { '[Ƒ›BTxt:' ~ $.text.substr(0,7) ~ '…]' }
   method format (:$attribute = "", :%variables = ()) {
-    $.text;
+    $!text;
   }
   method merge ($it) {
-    $.text ~= "\n" ~ $it.text;
+    $!text ~= "\n" ~ $it.text;
   }
 }
 class InlineText does Pattern does Argument {
@@ -95,7 +94,7 @@ class InlineText does Pattern does Argument {
   multi method gist (::?CLASS:U:) { '[Ƒ›InlineText]'                       }
   multi method gist (::?CLASS:D:) { '[Ƒ›ITxt:' ~ $.text.substr(0,7) ~ '…]' }
   method format (:$attribute, :@arguments) {
-    $.text;
+    $!text;
   }
   multi method merge (InlineText $it) { $.text ~=        $it.text; }
   multi method merge (BlockText  $it) { $.text ~= "\n" ~ $it.text; }

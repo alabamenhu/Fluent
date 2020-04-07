@@ -12,7 +12,7 @@ and Perl-y.
     add-localization-basepath('localization');
     add-localization-languages('en', 'es');
     say localized('helloworld');   #   ↪︎ "Hello World!" (if system set to English)
-    say localized('helloworld');   #   ↪︎ "¡Hola mundo!" (if system set to Spanish)
+    say localized 'helloworld';    #   ↪︎ "¡Hola mundo!" (if system set to Spanish)
 ```
 
 If you store the result of a `localized` call, you’ll get a Hashy `Str`.  That
@@ -20,7 +20,7 @@ means you can use it like a `Str` (because it is one), but if the message
 has attributes, you can access it via the normal associative ways:
 
 ```perl6
-    my  $translation = localized('greeting');
+    my  $translation = localized 'greeting';
     say $translation;          #   ↪︎ "Hello!"
     say $translation<foo>;     #   ↪︎ "some related text"
     say $translation{'bar'};   #   ↪︎ "some other related text"
@@ -45,7 +45,7 @@ languages will be used.
 Adds the given path (directories need to end in `/`!) to the list of locations
 where `.ftl` files can be found.  If used in a module, then pass the `:resource`
 adverb to have it search in the module’s resource folder.  Lazy loading is
-turned on by default.  Turning it off is mainly useful if you want to preparse
+enabled by default.  Turning it off is mainly useful if you want to preparse
 everything during a precompilation phase.
   * **add-localization-basepaths**(Str *@paths*, Str *:$domain?*, Bool *:$resource* = False, Bool, *:$lazy* = True)  
 Same as previous, but acts on a list of basepaths.
@@ -280,3 +280,9 @@ camelCase to ensure compatibility with other implementations.
     - API should be mostly frozen at this point.
   - 0.5
     - First semi working version
+
+# Licensing and rights information
+This module is released under the Artistic License 2.0.
+The social media image (resources/logo.png) is released under CC-by 4.0, and incorporates
+the pieces (https://commons.wikimedia.org/wiki/File:Adonis_Blue_Butterfly.jpg, licensed under CC0 1.0)
+and

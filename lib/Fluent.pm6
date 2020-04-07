@@ -3,7 +3,7 @@ unit module Fluent;
 #use Fluent::Grammar;
 #use Fluent::Actions;
 use Fluent::Classes;
-use Intl::BCP47;
+use Intl::LanguageTag;
 use Intl::UserLanguage;
 
 
@@ -71,9 +71,9 @@ class Domain {
     has Bool $.resource = False;
     has Bool $.lazy     = True;
     method file (Str() $filename) {
-      $.resource
-        ??  %?RESOURCES{$.path ~ $filename}
-        !! IO::Path.new($.path ~ $filename)
+      $!resource
+        ??  %?RESOURCES{$!path ~ $filename}
+        !! IO::Path.new($!path ~ $filename)
     }
   }
 
