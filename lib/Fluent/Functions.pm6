@@ -24,7 +24,7 @@ my &number = sub ($number, *%options) {
   my %pattern = get-number-pattern(
         $language,
         :system( get-default-number-system $language )
-        :count( plural-count $number ),
+        :count( plural-count $number, $language ),
         :format($style)
   ).format;
 

@@ -1,5 +1,5 @@
-use Fluent::Number;
-use Intl::BCP47;
+#use Fluent::Number;
+use Intl::LanguageTag;
 #use Intl::CLDR::Plurals;
 
 sub StrHash ($s, %h --> Str)  {
@@ -313,7 +313,7 @@ class Select is Placeable does Pattern  {
       #     (for example, input of +5.0 can match [5] in this block)
       # [2] Check for plural forms
       .format(:$attribute, :%variables).return with %.variants{$number};
-      my $plural = plural-count($selector, @*LANGUAGES.head);
+      my $plural = plural-count($selector, @*LANGUAGES.head, :type<cardinal>);
       .format(:$attribute, :%variables).return with %.variants{$plural};
     }
 

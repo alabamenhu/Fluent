@@ -19,7 +19,11 @@
     "Fluent::Actions": "lib/Fluent/Actions.pm6",
     "Fluent::Classes": "lib/Fluent/Classes.pm6",
     "Fluent::Functions": "lib/Fluent/Functions.pm6",
-    "Fluent::Grammar": "lib/Fluent/Grammar.pm6"
+    "Fluent::Grammar": "lib/Fluent/Grammar.pm6",
+    "Intl::Numbers": "lib/Intl/Numbers.pm6",
+    "Intl::Token::Alpha": "lib/Intl/Token/Alpha.pm6",
+    "Intl::Token::Number": "lib/Intl/Token/Number.pm6",
+    "Intl::Token::Punct": "lib/Intl/Token/Punct.pm6"
   },
   "resources": [],
   "license": "Artistic-2.0",

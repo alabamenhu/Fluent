@@ -1,4 +1,5 @@
 use Test;
+use lib 'lib';
 use Fluent;
 
 add-localization-basepath("t/03-data/");
