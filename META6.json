@@ -1,7 +1,7 @@
 {
   "name": "Intl::Fluent",
   "description": "A localization framework implementing Mozilla’s project Fluent",
-  "version": "0.8",
+  "version": "0.8.1",
   "perl": "6.*",
   "authors": [
     "Matthew ‘Matéu’ Stephen STUCKWISCH <mateu@softastur.com>"
@@ -10,7 +10,8 @@
   "depends": [
     "Intl::LanguageTag",
     "Intl::UserLanguage",
-    "Intl::CLDR::Plurals"
+    "Intl::Number::Plural",
+    "Intl::Format::Number"
   ],
   "build-depends": [],
   "test-depends": [],

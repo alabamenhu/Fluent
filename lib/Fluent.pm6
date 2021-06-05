@@ -127,7 +127,7 @@ class LocalizationManager is export {
   has Domain %!domains;
   has Domain $!default-domain = Domain.new;
 
-  has &!fallback-message = ( '[' ~ * ~ '|' ~ *.uc ~ ']' ); # [DOMAIN:message]
+  has &!fallback-message = ( '[' ~ * ~ '|' ~ *.uc ~ ']' ); #[DOMAIN:message]
   has @.default-languages = user-languages(); # Intl::UserLanguage
 
   method localized(

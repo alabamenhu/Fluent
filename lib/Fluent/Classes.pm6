@@ -1,6 +1,6 @@
-use Fluent::Number;
-use Intl::BCP47;
-#use Intl::CLDR::Plurals;
+#use Fluent::Number;
+use Intl::LanguageTag;
+use Intl::Number::Plural;
 
 sub StrHash ($s, %h --> Str)  {
   $s but (
@@ -302,7 +302,7 @@ class Select is Placeable does Pattern  {
   multi method gist (::?CLASS:U:) {  '[Ƒ›Select]'                           }
   multi method gist (::?CLASS:D:) {  '[Ƒ›Sel:' ~ (@.others.elems + 1) ~ ']' }
   method format (:$attribute = "", :%variables = ()) { ## todo check string vs number
-    use Intl::CLDR::Plurals;
+    use Intl::Number::Plural;
     my $selector = $.selector.format(:$attribute, :%variables);
 
     # Check first for exact match
@@ -313,7 +313,7 @@ class Select is Placeable does Pattern  {
       #     (for example, input of +5.0 can match [5] in this block)
       # [2] Check for plural forms
       .format(:$attribute, :%variables).return with %.variants{$number};
-      my $plural = plural-count($selector, @*LANGUAGES.head);
+      my $plural = plural-count($selector, :language(@*LANGUAGES.head));
       .format(:$attribute, :%variables).return with %.variants{$plural};
     }
 
@@ -323,7 +323,7 @@ class Select is Placeable does Pattern  {
 
   sub is-numeric ($x) {
     try {
-      CATCH { return False }
+      CATCH { return False }
       return $x.Numeric but True;
     }
   }

@@ -1,9 +1,11 @@
 # Introduction
 
-A Perl 6 module that implements Mozilla's Project Fluent.  This is an
+A Perl 6 / Raku module that implements Mozilla's Project Fluent.  This is an
 implementation based on the design documents, but it is not actually a port.
 The idea is to provide both an interface and code that is maintainable, usable,
-and Perl-y.
+and Raku-ish.
+
+**Note: This module is currently undergoing a top-to-bottom rewrite.  It should be used with caution at the moment.  Features should work, but if you supply specific options for number formatting (significant figures, etc) they may be slightly off.**
 
 ## Basic Usage
 
@@ -262,6 +264,8 @@ arguments supplied code-side.  Any arguments from the `.ftl` *must* use
 camelCase to ensure compatibility with other implementations.
 
 # Version history
+  - 0.8.1
+    - Minor adjustments for dependency chain changes.
   - 0.8 “Alcovy”
     - Added support for the `NUMBER` function (currency formatting will be available when Intl::CLDR supports it)
     - Improved handling for functions in general, including the ability for programs to add their own functions.

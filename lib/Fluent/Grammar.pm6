@@ -1,6 +1,6 @@
 unit grammar FTL;
 
-  token TOP { 
+  token TOP {
     [
       || <entry>
       || <blank-block>
