@@ -103,10 +103,10 @@ which it will add language codes (which may end in a `/` or not, but I find it
 easiest to keep them all in a folder, but you may want them prefixed elsewise).
 
 ```perl6
-    add-localization-basepath('localization/', :resources);
+    add-localization-basepath('localization/', :resource);
 ```
 
-The `:resources` adverb lets the module know to look in the `%*RESOURCES`
+The `:resource` adverb lets the module know to look in the `%*RESOURCES`
 variable for the file.  If the file is on the hard drive, don't use it,
 and just reference the file path as you would any other.  For example, in another
 project where we've named files 'ui_en.ftl', 'ui_es-ES.ftl', etc, we might say:
